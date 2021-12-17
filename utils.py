@@ -12,9 +12,7 @@ def shell(cmd):
     assert ercd == 0, f'Exit code of {cmd} is {ercd}'
     return res.stdout.read().decode().strip()
 
-def mkinfo(path):
-    #print(f'Scanning {path}...')
-
+def mkfilemap(path):
     files = shell(f'find "{path}"').split('\n')
     finfo = [FileInfo.FileInfo(fp) for fp in files]
 
@@ -25,17 +23,14 @@ def mkinfo(path):
             print(f'Magic string: {uf.type_str}')
         assert not unknown
 
-    metadata = {
-            'files': {
-                'cover': [f for f in finfo if 'image(cover)' == f.ftype],
-                'logs': [f for f in finfo if 'log' == f.ftype or 'cue' == f.ftype],
-                'cue': [f for f in finfo if 'cue' == f.ftype],
-                'audio': [f for f in finfo if 'audio' == f.ftype],
-                'booklets': [f for f in finfo if 'image' == f.ftype],
-                }
+    filemap = {
+            'cover': [f for f in finfo if 'image(cover)' == f.ftype],
+            'logs': [f for f in finfo if 'log' == f.ftype or 'cue' == f.ftype],
+            'cue': [f for f in finfo if 'cue' == f.ftype],
+            'audio': [f for f in finfo if 'audio' == f.ftype],
+            'booklets': [f for f in finfo if 'image' == f.ftype],
             }
-    ainfo = AlbumInfo.AlbumInfo(metadata['files'])
-    #print(metadata)
-    cmds = ainfo.ffmpeg_cmds()
-    for cmd in cmds:
-        print(cmd)
+    return filemap
+
+def mkalbum(filemap):
+    return AlbumInfo.AlbumInfo(filemap)

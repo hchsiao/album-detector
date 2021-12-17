@@ -23,34 +23,6 @@ class AlbumInfo:
             print(self.info['file'])
             raise NotImplementedError()
 
-    def ffmpeg_cmds(self):
-        retval = []
-        for track in self.tracks:
-            metadata = {
-                'artist': track['artist'],
-                'title': track['title'],
-                'album': track['album'],
-                'track': str(track['track']) + '/' + str(len(self.tracks))
-            }
-        
-            if 'genre' in track:
-                track['genre'] = track['genre']
-            if 'date' in track:
-                track['date'] = track['date']
-        
-            cmd = 'ffmpeg'
-            cmd += ' -i "%s"' % self.info['file']
-            cmd += ' -ss %.2d:%.2d:%.2d' % (track['start'] / 60 / 60, track['start'] / 60 % 60, int(track['start'] % 60))
-        
-            if 'duration' in track:
-                cmd += ' -t %.2d:%.2d:%.2d' % (track['duration'] / 60 / 60, track['duration'] / 60 % 60, int(track['duration'] % 60))
-        
-            cmd += ' ' + ' '.join('-metadata %s="%s"' % (k, v) for (k, v) in metadata.items())
-            cmd += ' "%.2d - %s - %s.flac"' % (track['track'], track['artist'], track['title'])
-        
-            retval.append(cmd)
-        return retval
-
     def _tags(self, f):
         jsn = utils.shell('ffprobe '
                 '-loglevel 0 '
@@ -122,4 +94,45 @@ class AlbumInfo:
             return embedded_cue
         else:
             return None
+
+    @cached_property
+    def album_dirname(self):
+        return f"{self.info['artist']} - {self.info['album']}"
+
+    def cmds(self, output_dir):
+        retval = []
+        # TODO: add cp commands
+        retval.append('mkdir -p "{}"'.format(os.path.join(output_dir, self.album_dirname)))
+        #retval += self.ffmpeg_cmds(output_dir)
+        return retval
+
+    def ffmpeg_cmds(self, output_dir):
+        retval = []
+        for track in self.tracks:
+            metadata = {
+                'artist': track['artist'],
+                'title': track['title'],
+                'album': track['album'],
+                'track': str(track['track']) + '/' + str(len(self.tracks))
+            }
+        
+            if 'genre' in track:
+                track['genre'] = track['genre']
+            if 'date' in track:
+                track['date'] = track['date']
+        
+            cmd = 'ffmpeg'
+            cmd += ' -i "%s"' % self.info['file']
+            cmd += ' -ss %.2d:%.2d:%.2d' % (track['start'] / 60 / 60, track['start'] / 60 % 60, int(track['start'] % 60))
+        
+            if 'duration' in track:
+                cmd += ' -t %.2d:%.2d:%.2d' % (track['duration'] / 60 / 60, track['duration'] / 60 % 60, int(track['duration'] % 60))
+        
+            cmd += ' ' + ' '.join('-metadata %s="%s"' % (k, v) for (k, v) in metadata.items())
+            out_fname = '%.2d.flac' % track['track']
+            out_fname = os.path.join(output_dir, self.album_dirname, out_fname)
+            cmd += f' "{out_fname}"'
+        
+            retval.append(cmd)
+        return retval
 
