@@ -56,6 +56,9 @@ class FileInfo:
     def is_garbage(self):
         if 'inf.xml' == self.basename:
             return True
+        if 'Apple Desktop Services Store' == self.type_str:
+            # .DS_Store
+            return True
         return False
 
     @cached_property
@@ -71,8 +74,13 @@ class FileInfo:
         _fmt = [
                 self.is_tak_audio,
                 self.is_ape_audio,
+                self.is_flac_audio,
                 ]
         return any(_fmt)
+
+    @cached_property
+    def is_flac_audio(self):
+        return "FLAC audio" in self.type_str
 
     @cached_property
     def is_ape_audio(self):

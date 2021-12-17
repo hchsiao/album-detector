@@ -5,22 +5,31 @@ import os
 import utils
 
 class AlbumInfo:
-    # TODO: don't assume there's only one disc
     def __init__(self, files):
         self.files = files
         self.audio_with_cue = [
                 f for f in self.files['audio'] if self._embedded_cue_str(f.fpath)]
+
+        # TODO: don't assume there's only one disc
+        # TODO: search for '[0]' when fixing
         assert len(self.files['cue']) <= 1
         assert len(self.audio_with_cue) <= 1
 
         if self.cue:
             self.info, self.tracks = self._parse_cue(self.cue)
         else:
+            # TODO: handle case: both implicit/explicit cue not exist
+            # e.g. Splitted flacs
             raise NotImplementedError()
 
-        self.info['file'] = os.path.join(self.cue_file.dirname, self.info['file'])
+        if self.audio_with_cue:
+            self.info['file'] = self.audio_with_cue[0].fpath
+        else:
+            self.info['file'] = os.path.join(self.cue_file.dirname, self.info['file'])
+
         if not os.path.exists(self.info['file']):
             print(self.info['file'])
+            # TODO: adjust cue pointed audio file
             raise NotImplementedError()
 
     def _tags(self, f):
@@ -34,7 +43,11 @@ class AlbumInfo:
 
     def _embedded_cue_str(self, f):
         tags = self._tags(f)
-        return tags['Cuesheet'] if tags and 'Cuesheet' in tags else None
+        if tags and 'Cuesheet' in tags:
+            return tags['Cuesheet'] 
+        if tags and 'cuesheet' in tags:
+            return tags['cuesheet'] 
+        return None
 
     def _parse_cue(self, cue):
         d = cue.splitlines()
@@ -84,14 +97,15 @@ class AlbumInfo:
 
     @cached_property
     def cue(self):
-        if self.files['cue']:
+        """Returns cue string (embedded cue are preferred)."""
+        if self.audio_with_cue:
+            embedded_cue = self._embedded_cue_str(self.audio_with_cue[0].fpath)
+            self.cue_file = self.files['audio'][0]
+            return embedded_cue
+        elif self.files['cue']:
             retval = open(self.files['cue'][0].fpath, 'r').read()
             self.cue_file = self.files['cue'][0]
             return retval.replace('\ufeff', '') # Remove BOM
-        elif embedded_cue := self._embedded_cue_str(self.files['audio'][0].fpath):
-            assert not self.files['cue']
-            self.cue_file = self.files['audio'][0]
-            return embedded_cue
         else:
             return None
 
@@ -103,7 +117,7 @@ class AlbumInfo:
         retval = []
         # TODO: add cp commands
         retval.append('mkdir -p "{}"'.format(os.path.join(output_dir, self.album_dirname)))
-        #retval += self.ffmpeg_cmds(output_dir)
+        retval += self.ffmpeg_cmds(output_dir)
         return retval
 
     def ffmpeg_cmds(self, output_dir):
@@ -115,6 +129,8 @@ class AlbumInfo:
                 'album': track['album'],
                 'track': str(track['track']) + '/' + str(len(self.tracks))
             }
+            if self.audio_with_cue: # TODO: single disc assumption
+                metadata['cuesheet'] = ''
         
             if 'genre' in track:
                 track['genre'] = track['genre']
