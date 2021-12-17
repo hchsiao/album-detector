@@ -16,6 +16,10 @@ def mkfilemap(path):
     files = shell(f'find "{path}"').split('\n')
     finfo = [FileInfo.FileInfo(fp) for fp in files]
 
+    # Assume basenames are unique
+    basenames = [f.basename for f in finfo]
+    assert len(set(basenames)) == len(basenames)
+
     unknown = [f for f in finfo if 'unknown' == f.ftype]
     if unknown:
         for uf in unknown:
@@ -27,9 +31,11 @@ def mkfilemap(path):
             'cover': [f for f in finfo if 'image(cover)' == f.ftype],
             'logs': [f for f in finfo if 'log' == f.ftype or 'cue' == f.ftype],
             'cue': [f for f in finfo if 'cue' == f.ftype],
-            'audio': [f for f in finfo if 'audio' == f.ftype],
+            'audio(lossless)': [f for f in finfo if 'audio(lossless)' == f.ftype],
             'booklets': [f for f in finfo if 'image' == f.ftype],
             }
+    assert len(filemap['cover']) == 1
+    filemap['cover'] = filemap['cover'][0]
     return filemap
 
 def mkalbum(filemap):

@@ -70,11 +70,12 @@ class FileInfo:
         return False
 
     @cached_property
-    def is_audio(self):
+    def is_lossless_audio(self):
         _fmt = [
                 self.is_tak_audio,
                 self.is_ape_audio,
                 self.is_flac_audio,
+                self.is_tta_audio,
                 ]
         return any(_fmt)
 
@@ -87,6 +88,10 @@ class FileInfo:
         return "Monkey's Audio" in self.type_str
 
     @cached_property
+    def is_tta_audio(self):
+        return "True Audio Lossless Audio" in self.type_str
+
+    @cached_property
     def is_tak_audio(self):
         return 'data' == self.type_str and 'tak' == self.fext
 
@@ -96,12 +101,12 @@ class FileInfo:
             return 'not_file'
         if self.is_garbage:
             return 'garbage'
-        if self.is_log:
+        if self.is_log and not self.is_cue:
             return 'log'
         if self.is_cue:
             return 'cue'
-        if self.is_audio:
-            return 'audio'
+        if self.is_lossless_audio:
+            return 'audio(lossless)'
         if self.is_image:
             return 'image' if not self.is_cover_image else 'image(cover)'
         return 'unknown'

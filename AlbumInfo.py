@@ -8,7 +8,8 @@ class AlbumInfo:
     def __init__(self, files):
         self.files = files
         self.audio_with_cue = [
-                f for f in self.files['audio'] if self._embedded_cue_str(f.fpath)]
+                f for f in self.files['audio(lossless)']
+                if self._embedded_cue_str(f.fpath)]
 
         # TODO: don't assume there's only one disc
         # TODO: search for '[0]' when fixing
@@ -100,7 +101,7 @@ class AlbumInfo:
         """Returns cue string (embedded cue are preferred)."""
         if self.audio_with_cue:
             embedded_cue = self._embedded_cue_str(self.audio_with_cue[0].fpath)
-            self.cue_file = self.files['audio'][0]
+            self.cue_file = self.files['audio(lossless)'][0]
             return embedded_cue
         elif self.files['cue']:
             retval = open(self.files['cue'][0].fpath, 'r').read()
@@ -115,8 +116,15 @@ class AlbumInfo:
 
     def cmds(self, output_dir):
         retval = []
-        # TODO: add cp commands
-        retval.append('mkdir -p "{}"'.format(os.path.join(output_dir, self.album_dirname)))
+        album_dir = os.path.join(output_dir, self.album_dirname)
+        cover_img = self.files['cover'].fpath
+        retval.append(f'mkdir -p "{album_dir}/logs"')
+        retval.append(f'mkdir -p "{album_dir}/images"')
+        for f in self.files['booklets']:
+            retval.append(f'cp "{f.fpath}" "{album_dir}/images"')
+        retval.append(f'cp "{cover_img}" "{album_dir}/images"')
+        for f in self.files['logs']:
+            retval.append(f'cp "{f.fpath}" "{album_dir}/logs"')
         retval += self.ffmpeg_cmds(output_dir)
         return retval
 
