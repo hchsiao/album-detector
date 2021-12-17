@@ -108,6 +108,7 @@ class AlbumInfo:
     def cmds(self, output_dir):
         retval = []
         album_dir = os.path.join(output_dir, self.album_dirname)
+        retval.append(f'mkdir -p "{album_dir}"')
 
         if self.cover or self.booklets:
             retval.append(f'mkdir -p "{album_dir}/images"')
@@ -124,6 +125,8 @@ class AlbumInfo:
 
         for disc in self.discs:
             retval += disc.ffmpeg_cmds(album_dir)
+
+        retval.append(f'find "{album_dir}" -type f -exec chmod 0644 {{}} \\;')
 
         return retval
 
