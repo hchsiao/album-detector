@@ -35,8 +35,8 @@ def mkfilemap(path):
             'audio(lossy)': [],
             'booklets': [f for f in finfo if 'image' == f.ftype],
             }
-    assert len(filemap['cover']) == 1
-    filemap['cover'] = filemap['cover'][0]
+    assert len(filemap['cover']) <= 1
+    filemap['cover'] = filemap['cover'][0] if filemap['cover'] else None
     return filemap
 
 def mkalbum(filemap):

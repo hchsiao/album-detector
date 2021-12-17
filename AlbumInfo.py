@@ -108,15 +108,22 @@ class AlbumInfo:
     def cmds(self, output_dir):
         retval = []
         album_dir = os.path.join(output_dir, self.album_dirname)
-        cover_img = self.cover.fpath
-        retval.append(f'mkdir -p "{album_dir}/logs"')
-        retval.append(f'mkdir -p "{album_dir}/images"')
+
+        if self.cover or self.booklets:
+            retval.append(f'mkdir -p "{album_dir}/images"')
         for f in self.booklets:
             retval.append(f'cp "{f.fpath}" "{album_dir}/images"')
-        retval.append(f'cp "{cover_img}" "{album_dir}/images"')
+        if self.cover:
+            cover_img = self.cover.fpath
+            retval.append(f'cp "{cover_img}" "{album_dir}/images"')
+
+        if self.logs:
+            retval.append(f'mkdir -p "{album_dir}/logs"')
         for f in self.logs:
             retval.append(f'cp "{f.fpath}" "{album_dir}/logs"')
+
         for disc in self.discs:
             retval += disc.ffmpeg_cmds(album_dir)
+
         return retval
 
