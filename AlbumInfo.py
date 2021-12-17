@@ -5,7 +5,7 @@ import re
 import utils
 
 def norm_album_name(name):
-    name = re.sub(r'[（(]Disc\d[)）]', '', name)
+    name = re.sub(r'[（(]?Disc\d[)）]?', '', name)
     return name.strip()
 
 class DiscInfo:
@@ -96,8 +96,8 @@ class AlbumInfo:
 
         disc_albums = [norm_album_name(disc.info['album']) for disc in self.discs]
         disc_artists = [disc.info['artist'] for disc in self.discs]
-        assert len(set(disc_albums)) == 1
-        assert len(set(disc_artists)) == 1 # TODO: shouldn't enforce
+        assert len(set(disc_albums)) == 1, str(disc_albums)
+        assert len(set(disc_artists)) == 1, str(disc_artists) # TODO: shouldn't enforce
         self.album = disc_albums[0]
         self.artist = disc_artists[0]
 

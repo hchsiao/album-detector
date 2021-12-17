@@ -45,9 +45,10 @@ class FileInfo:
     
     @cached_property
     def embedded_cue(self):
-        if self.is_tta_audio:
-            # TTA cannot carry embedded CUE
+        if self.is_tta_audio or self.is_ape_audio:
+            # cannot carry embedded CUE
             return None
+        print(self)
         tags = self._tags()
         if tags and 'Cuesheet' in tags:
             return tags['Cuesheet'] 
