@@ -32,6 +32,7 @@ def mkfilemap(path):
             'logs': [f for f in finfo if 'log' == f.ftype or 'cue' == f.ftype],
             'cue': [f for f in finfo if 'cue' == f.ftype],
             'audio(lossless)': [f for f in finfo if 'audio(lossless)' == f.ftype],
+            'audio(lossy)': [],
             'booklets': [f for f in finfo if 'image' == f.ftype],
             }
     assert len(filemap['cover']) == 1
