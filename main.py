@@ -1,4 +1,5 @@
 # TODO: check https://github.com/flacon/flacon/issues/41
+# TODO: Handle '/' in album name
 import argparse
 import os
 

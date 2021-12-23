@@ -48,8 +48,7 @@ class FileInfo:
         if self.is_tta_audio or self.is_ape_audio:
             # cannot carry embedded CUE
             return None
-        print(self)
-        tags = self._tags()
+        tags = self._tags
         if tags and 'Cuesheet' in tags:
             return tags['Cuesheet'] 
         if tags and 'cuesheet' in tags:
@@ -58,7 +57,9 @@ class FileInfo:
 
     @cached_property
     def is_image(self):
-        if 'JPEG' in self.type_str:
+        if 'JPEG image' in self.type_str:
+            return True
+        if 'PNG image' in self.type_str:
             return True
         return False
 
@@ -91,7 +92,7 @@ class FileInfo:
     def is_cover_image(self):
         if not self.is_image:
             return False
-        if 'cover' in self.basename.lower():
+        if self.basename.lower().startswith('cover'):
             return True
         return False
 

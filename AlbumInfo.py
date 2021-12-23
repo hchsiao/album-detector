@@ -19,7 +19,7 @@ class DiscInfo:
         self.info, self.tracks = cue_info
 
         if self.cue_embedded:
-            self.info['file'] = self.audio.fpath
+            self.info['file'] = audio.fpath
         else:
             self.info['file'] = os.path.join(cue.dirname, self.info['file'])
 
@@ -123,6 +123,7 @@ class AlbumInfo:
         for f in self.logs:
             retval.append(f'cp "{f.fpath}" "{album_dir}/logs"')
 
+        # TODO: Add disc no to filenames in addition to the track no
         for disc in self.discs:
             retval += disc.ffmpeg_cmds(album_dir)
 
