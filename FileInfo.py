@@ -1,6 +1,7 @@
 from functools import cached_property
 import os
 import json
+import re
 
 import utils
 
@@ -32,7 +33,7 @@ class FileInfo:
                 f'file "{self.fpath}"').replace(f'{self.fpath}: ', '')
 
     @cached_property
-    def _tags(self):
+    def _ffprobe(self):
         if not self.is_audio:
             return None
         jsn = utils.shell('ffprobe '
@@ -40,15 +41,34 @@ class FileInfo:
                 '-print_format json '
                 '-show_format '
                 f'"{self.fpath}"')
-        fmt = json.loads(jsn)['format']
-        return fmt['tags'] if 'tags' in fmt else None
+        return json.loads(jsn)
+    
+    @cached_property
+    def audio_info(self):
+        if not self.is_audio:
+            return None
+        fmt = self._ffprobe['format']
+        if 'tags' in fmt:
+            return {k.lower(): v for k, v in fmt['tags'].items()}
+        else:
+            return None
+    
+    @cached_property
+    def track_no(self):
+        if not self.is_audio or 'track' not in self.audio_info:
+            return None
+        match = re.match(r'(\d+)/\d+', self.audio_info['track'])
+        if match:
+            return int(match.group(1))
+        else:
+            return int(self.audio_info['track'])
     
     @cached_property
     def embedded_cue(self):
         if self.is_tta_audio or self.is_ape_audio:
             # cannot carry embedded CUE
             return None
-        tags = self._tags
+        tags = self.audio_info
         if tags and 'Cuesheet' in tags:
             return tags['Cuesheet'] 
         if tags and 'cuesheet' in tags:
@@ -60,6 +80,8 @@ class FileInfo:
         if 'JPEG image' in self.type_str:
             return True
         if 'PNG image' in self.type_str:
+            return True
+        if 'data' == self.type_str and 'bmp' == self.fext:
             return True
         return False
 

@@ -4,24 +4,63 @@ import re
 
 import utils
 
+# TODO: metadata: maintain a single source of trust
+
 def norm_album_name(name):
-    name = re.sub(r'[（(]?Disc\d[)）]?', '', name)
+    name = re.sub(r'[（(]?[Dd]isc\d[)）]?', '', name)
     return name.strip()
 
 class DiscInfo:
+    n_instances = 0
+
     def __init__(self, album, cue=None, audio=None):
-        assert cue is not None or audio is not None
-        assert cue or audio.embedded_cue # TODO: shouldn't enforce
         self.album = album
-        self.cue_embedded = cue is None
+        assert cue is not None or audio is not None
 
-        cue_info = audio.cue_info if audio and audio.embedded_cue else cue.cue_info
-        self.info, self.tracks = cue_info
-
-        if self.cue_embedded:
-            self.info['file'] = audio.fpath
+        if type(audio) is list:
+            self.audio_splitted = True
+            self.cue_embedded = False
+            track_albums = [a.audio_info['album'] for a in audio]
+            track_artists = [a.audio_info['artist'] for a in audio]
+            assert len(set(track_albums)) == 1, str(track_albums)
+            assert len(set(track_artists)) == 1, str(track_artists) # TODO: shouldn't enforce
+            self.info = {
+                    'album': track_albums[0],
+                    'artist': track_artists[0],
+                    }
         else:
-            self.info['file'] = os.path.join(cue.dirname, self.info['file'])
+            self.audio_splitted = False
+            assert cue or audio.embedded_cue # TODO: shouldn't enforce
+            self.cue_embedded = cue is None
+
+            cue_info = audio.cue_info if audio and audio.embedded_cue else cue.cue_info
+            self.info, self.tracks = cue_info
+
+            if self.cue_embedded:
+                self.info['file'] = audio.fpath
+            else:
+                self.info['file'] = os.path.join(cue.dirname, self.info['file'])
+
+        DiscInfo.n_instances += 1
+        self.disc_no = DiscInfo.n_instances
+
+    @cached_property
+    def _disc_no(self):
+        # TODO: query music database
+        raise NotImplementedError()
+
+    def output_filename(self, track_no, ext):
+        return 'disc%d-%.2d.%s' % (self.disc_no, track_no, ext)
+
+    def audio_cmds(self, output_dir):
+        if not self.audio_splitted:
+            return self.ffmpeg_cmds(output_dir)
+        else:
+            retval = []
+            for a in self.album.audio:
+                out_fname = self.output_filename(a.track_no, a.fext)
+                retval.append(f'cp "{a.fpath}" "{output_dir}/{out_fname}"')
+            return retval
 
     def ffmpeg_cmds(self, output_dir):
         retval = []
@@ -48,7 +87,7 @@ class DiscInfo:
                 cmd += ' -t %.2d:%.2d:%.2d' % (track['duration'] / 60 / 60, track['duration'] / 60 % 60, int(track['duration'] % 60))
         
             cmd += ' ' + ' '.join('-metadata %s="%s"' % (k, v) for (k, v) in metadata.items())
-            out_fname = '%.2d.flac' % track['track']
+            out_fname = self.output_filename(track['track'], 'flac')
             out_fname = os.path.join(output_dir, out_fname)
             cmd += f' "{out_fname}"'
         
@@ -89,43 +128,44 @@ class AlbumInfo:
                 if os.path.isfile(ca):
                     self.discs.append(DiscInfo(album=self, cue=cue))
         else:
-            # TODO: decern the following
-            # Splitted audio && Single disc
-            # Splitted audio && Multiple disc
-            raise NotImplementedError()
+            track_no_list = []
+            for a in self.audio:
+                track_no_list.append(a.track_no)
+            if len(set(track_no_list)) == len(track_no_list):
+                # Splitted audio && Single disc
+                self.discs = [DiscInfo(album=self, audio=self.audio)]
+            else:
+                # Splitted audio && Multiple disc
+                raise NotImplementedError()
 
         disc_albums = [norm_album_name(disc.info['album']) for disc in self.discs]
         disc_artists = [disc.info['artist'] for disc in self.discs]
         assert len(set(disc_albums)) == 1, str(disc_albums)
         assert len(set(disc_artists)) == 1, str(disc_artists) # TODO: shouldn't enforce
-        self.album = disc_albums[0]
+        self.name = disc_albums[0]
         self.artist = disc_artists[0]
 
-    @cached_property
-    def album_dirname(self):
-        return f"{self.artist} - {self.album}"
-
-    def cmds(self, output_dir):
+    def cmds(self, output_dir, audio_only=False):
         retval = []
-        album_dir = os.path.join(output_dir, self.album_dirname)
+        album_dir = os.path.join(output_dir, self.artist, self.name)
         retval.append(f'mkdir -p "{album_dir}"')
 
-        if self.cover or self.booklets:
-            retval.append(f'mkdir -p "{album_dir}/images"')
-        for f in self.booklets:
-            retval.append(f'cp "{f.fpath}" "{album_dir}/images"')
         if self.cover:
-            cover_img = self.cover.fpath
-            retval.append(f'cp "{cover_img}" "{album_dir}/images"')
+            retval.append(f'cp "{self.cover.fpath}" "{album_dir}/cover.{self.cover.fext}"')
 
-        if self.logs:
-            retval.append(f'mkdir -p "{album_dir}/logs"')
-        for f in self.logs:
-            retval.append(f'cp "{f.fpath}" "{album_dir}/logs"')
+        if not audio_only:
+            if self.cover or self.booklets:
+                retval.append(f'mkdir -p "{album_dir}/images"')
+            for f in self.booklets:
+                retval.append(f'cp "{f.fpath}" "{album_dir}/images"')
 
-        # TODO: Add disc no to filenames in addition to the track no
+            if self.logs:
+                retval.append(f'mkdir -p "{album_dir}/logs"')
+            for f in self.logs:
+                retval.append(f'cp "{f.fpath}" "{album_dir}/logs"')
+
         for disc in self.discs:
-            retval += disc.ffmpeg_cmds(album_dir)
+            retval += disc.audio_cmds(album_dir)
 
         retval.append(f'find "{album_dir}" -type f -exec chmod 0644 {{}} \\;')
 
