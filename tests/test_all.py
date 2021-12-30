@@ -1,11 +1,9 @@
 import unittest
 import json
 
-from lib import MyTestCase
+from album_detector import mkalbum
 
-from album_detector.utils import mkfilemap, mkalbum
-
-class TestAll(MyTestCase):
+class TestAll(unittest.TestCase):
     def setUp(self):
         super().setUp()
 
@@ -19,8 +17,7 @@ class TestAll(MyTestCase):
         for path, golden in testdata.items():
             n_processing += 1
             print(f'Processing {n_processing}/{n_total}...')
-            filemap = mkfilemap(path)
-            album = mkalbum(filemap)
+            album = mkalbum(path)
             cmds = album.cmds('/tmp', audio_only=False)
             cmds = '\n'.join(cmds)
             try:

@@ -41,5 +41,6 @@ def mkfilemap(path):
 
     return filemap
 
-def mkalbum(filemap):
+def mkalbum(path):
+    filemap = mkfilemap(path)
     return AlbumInfo.AlbumInfo(filemap)

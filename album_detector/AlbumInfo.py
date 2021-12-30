@@ -9,8 +9,6 @@ def norm_album_name(name):
     return name.strip()
 
 class DiscInfo:
-    n_instances = 0
-
     def __init__(self, album, cue=None, audio=None):
         self.album = album
         assert cue is not None or audio is not None
@@ -39,8 +37,8 @@ class DiscInfo:
             else:
                 self.info['file'] = os.path.join(cue.dirname, self.info['file'])
 
-        DiscInfo.n_instances += 1
-        self.disc_no = DiscInfo.n_instances
+        album.n_disc += 1
+        self.disc_no = album.n_disc
 
     @cached_property
     def _disc_no(self):
@@ -112,6 +110,7 @@ class AlbumInfo:
                 for cue in cues]
         # TODO: may need to fix filename if all are wrong
 
+        self.n_disc = 0
         embedded_cues = [a.embedded_cue for a in self.audio]
         assert self.audio
         if any(embedded_cues):

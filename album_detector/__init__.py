@@ -1,7 +1,7 @@
 import argparse
 import os
 
-from .utils import mkfilemap, mkalbum
+from .utils import mkalbum
 
 def main():
     parser = argparse.ArgumentParser(description='TODO')
@@ -14,9 +14,7 @@ def main():
     
     path = os.path.normpath(args.path)
     
-    filemap = mkfilemap(path)
-    album = mkalbum(filemap)
-    
+    album = mkalbum(path)
     cmds = album.cmds(args.output_dir, audio_only=args.audio_only)
     for cmd in cmds:
         if args.doit:
