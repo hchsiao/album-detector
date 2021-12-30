@@ -2,9 +2,7 @@ from functools import cached_property
 import os
 import re
 
-import utils
-
-# TODO: metadata: maintain a single source of trust
+from . import utils
 
 def norm_album_name(name):
     name = re.sub(r'[（(]?[Dd]isc\d[)）]?', '', name)

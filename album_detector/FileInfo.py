@@ -3,7 +3,7 @@ import os
 import json
 import re
 
-import utils
+from . import utils
 
 class FileInfo:
     def __init__(self, fpath):
@@ -171,7 +171,8 @@ class FileInfo:
     @cached_property
     def cue_info(self):
         if self.is_cue:
-            cue_str = open(self.fpath, 'r').read()
+            with open(self.fpath, 'r') as f:
+                cue_str = f.read()
             cue_str = cue_str.replace('\ufeff', '') # Remove BOM
         elif self.is_audio:
             cue_str = self.embedded_cue

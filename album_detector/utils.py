@@ -1,16 +1,16 @@
 import os
 import subprocess
+import signal
 
-import FileInfo
-import AlbumInfo
+from . import FileInfo, AlbumInfo
 
 def shell(cmd):
-    res = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-    res.wait()
-
-    ercd = res.returncode
-    assert ercd == 0, f'Exit code of {cmd} is {ercd}'
-    return res.stdout.read().decode().strip()
+    with subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE) as p:
+        p.wait()
+        ercd = p.returncode
+        assert ercd == 0, f'Exit code of {cmd} is {ercd}'
+        retval = p.stdout.read().decode().strip()
+    return retval
 
 def mkfilemap(path):
     files = shell(f'find "{path}"').split('\n')
