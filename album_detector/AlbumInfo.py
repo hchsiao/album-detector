@@ -5,7 +5,8 @@ import re
 from . import utils
 
 def norm_album_name(name):
-    name = re.sub(r'[（(]?[Dd]isc\d[)）]?', '', name)
+    # Examples: Disc1, [DISC.1]
+    name = re.sub(r'[\[（(]?[Dd](isc|ISC)\.?\d[)）\]]?', '', name)
     return name.strip()
 
 class DiscInfo:
@@ -39,6 +40,9 @@ class DiscInfo:
 
         album.n_disc += 1
         self.disc_no = album.n_disc
+        # slashs are not supported in filesystems
+        self.info['album'] = self.info['album'].replace('/', '／')
+        self.info['artist'] = self.info['artist'].replace('/', '／')
 
     @cached_property
     def _disc_no(self):

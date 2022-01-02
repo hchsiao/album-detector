@@ -77,6 +77,8 @@ class FileInfo:
 
     @cached_property
     def is_image(self):
+        if 'TIFF image' in self.type_str:
+            return True
         if 'JPEG image' in self.type_str:
             return True
         if 'PNG image' in self.type_str:
@@ -103,6 +105,14 @@ class FileInfo:
 
     @cached_property
     def is_garbage(self):
+        if 'fpl' == self.fext and 'data' == self.type_str:
+            return True
+        if 'Thumbs.db' == self.basename:
+            return True
+        if 'url' == self.fext:
+            return True
+        if 'm3u' == self.fext:
+            return True
         if 'inf.xml' == self.basename:
             return True
         if 'Apple Desktop Services Store' == self.type_str:
@@ -115,6 +125,8 @@ class FileInfo:
         if not self.is_image:
             return False
         if self.basename.lower().startswith('cover'):
+            return True
+        if self.basename.lower().startswith('folder'):
             return True
         return False
 
@@ -171,23 +183,32 @@ class FileInfo:
     @cached_property
     def cue_info(self):
         if self.is_cue:
-            with open(self.fpath, 'r') as f:
-                cue_str = f.read()
-            cue_str = cue_str.replace('\ufeff', '') # Remove BOM
+            try:
+                with open(self.fpath, 'r') as f:
+                    cue_str = f.read()
+            except UnicodeDecodeError:
+                with open(self.fpath, 'r', encoding="ISO-8859-1") as f:
+                    cue_str = f.read()
         elif self.is_audio:
             cue_str = self.embedded_cue
-        d = cue_str.splitlines()
+        cue_str = cue_str.replace('\ufeff', '') # Remove BOM
+        cue_str = cue_str.replace('\r\n', '\n')
+        d = cue_str.split('\n')
         general = {}
         tracks = []
         
         for line in d:
-            if line.startswith('REM GENRE '):
+            if not line:
+                continue
+            elif line.startswith('REM GENRE '):
                 general['genre'] = ' '.join(line.split(' ')[2:])
             elif line.startswith('REM DATE '):
                 general['date'] = ' '.join(line.split(' ')[2:])
             elif line.startswith('REM DISCID '):
                 pass
             elif line.startswith('REM COMMENT '):
+                pass
+            elif line.startswith('REM COMPOSER '):
                 pass
             elif line.startswith('CATALOG '):
                 pass
@@ -203,6 +224,8 @@ class FileInfo:
                 tracks.append(track)
             elif line.startswith('    ISRC '):
                 pass
+            elif line.startswith('    REM COMPOSER '):
+                pass
             elif line.startswith('    TITLE '):
                 tracks[-1]['title'] = ' '.join(line.strip().split(' ')[1:]).replace('"', '')
             elif line.startswith('    PERFORMER '):
@@ -213,7 +236,7 @@ class FileInfo:
                 t = [int(n) for n in ' '.join(line.strip().split(' ')[2:]).replace('"', '').split(':')]
                 tracks[-1]['start'] = 60 * t[0] + t[1] + t[2] / 100.0
             else:
-                assert False, f'Unknown cue line: {line}'
+                assert False, f'Unknown cue line: {line} (bytes: {line.encode()})'
         
         for i in range(len(tracks)):
             if i != len(tracks) - 1:

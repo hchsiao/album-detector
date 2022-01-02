@@ -12,8 +12,9 @@ def shell(cmd):
         retval = p.stdout.read().decode().strip()
     return retval
 
-def mkfilemap(path):
-    files = shell(f'find "{path}"').split('\n')
+def mkfilemap(path, max_files=200):
+    files = shell(f'find "{path}" | head -n {max_files+1}').split('\n')
+    assert not len(files) > max_files, 'Too many files for an album.'
     finfo = [FileInfo.FileInfo(fp) for fp in files]
 
     # Assume basenames are unique
