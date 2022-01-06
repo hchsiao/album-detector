@@ -33,8 +33,9 @@ def mkfilemap(path, max_files=200):
             'logs': [f for f in finfo if 'log' == f.ftype or 'cue' == f.ftype],
             'cue': [f for f in finfo if 'cue' == f.ftype],
             'audio(lossless)': [f for f in finfo if 'audio(lossless)' == f.ftype],
-            'audio(lossy)': [],
+            'audio(lossy)': [f for f in finfo if 'audio(lossy)' == f.ftype],
             'booklets': [f for f in finfo if 'image' == f.ftype],
+            'mv': [f for f in finfo if 'video' == f.ftype],
             }
 
     # Select one of the covers as the only cover

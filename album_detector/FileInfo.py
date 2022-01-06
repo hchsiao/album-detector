@@ -76,6 +76,12 @@ class FileInfo:
         return None
 
     @cached_property
+    def is_video(self):
+        if 'mkv' == self.fext:
+            return True
+        return False
+
+    @cached_property
     def is_image(self):
         if 'TIFF image' in self.type_str:
             return True
@@ -113,6 +119,8 @@ class FileInfo:
             return True
         if 'm3u' == self.fext:
             return True
+        if 'm3u8' == self.fext:
+            return True
         if 'inf.xml' == self.basename:
             return True
         if 'Apple Desktop Services Store' == self.type_str:
@@ -136,6 +144,8 @@ class FileInfo:
 
     @cached_property
     def is_lossy_audio(self):
+        if 'mp3' == self.fext and 'MPEG ADTS, layer III' in self.type_str:
+            return True
         return False
 
     @cached_property
@@ -145,6 +155,7 @@ class FileInfo:
                 self.is_ape_audio,
                 self.is_flac_audio,
                 self.is_tta_audio,
+                self.is_wav_audio,
                 ]
         return any(_fmt)
 
@@ -165,17 +176,26 @@ class FileInfo:
         return 'data' == self.type_str and 'tak' == self.fext
 
     @cached_property
+    def is_wav_audio(self):
+        return 'WAVE audio' in self.type_str
+
+    @cached_property
     def ftype(self):
+        """ TODO: Avoid string literals """
         if not self.is_file:
             return 'not_file'
         if self.is_garbage:
             return 'garbage'
         if self.is_log and not self.is_cue:
             return 'log'
+        if self.is_video:
+            return 'video'
         if self.is_cue:
             return 'cue'
         if self.is_lossless_audio:
             return 'audio(lossless)'
+        if self.is_lossy_audio:
+            return 'audio(lossy)'
         if self.is_image:
             return 'image' if not self.is_cover_image else 'image(cover)'
         return 'unknown'

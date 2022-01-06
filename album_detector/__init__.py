@@ -3,6 +3,17 @@ import os
 
 from .utils import mkalbum
 
+def handle_item(path, output_dir, audio_only, dry_run):
+    path = os.path.normpath(path)
+    
+    album = mkalbum(path)
+    cmds = album.cmds(output_dir, audio_only=audio_only)
+    for cmd in cmds:
+        if dry_run:
+            print(cmd)
+        else:
+            os.system(cmd)
+
 def main():
     parser = argparse.ArgumentParser(description='TODO')
     parser.add_argument('path') 
@@ -13,11 +24,4 @@ def main():
     args = parser.parse_args()
     
     path = os.path.normpath(args.path)
-    
-    album = mkalbum(path)
-    cmds = album.cmds(args.output_dir, audio_only=args.audio_only)
-    for cmd in cmds:
-        if args.doit:
-            os.system(cmd)
-        else:
-            print(cmd)
+    handle_item(path, args.output_dir, args.audio_only, not args.doit)

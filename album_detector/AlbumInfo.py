@@ -44,6 +44,10 @@ class DiscInfo:
         self.info['album'] = self.info['album'].replace('/', '／')
         self.info['artist'] = self.info['artist'].replace('/', '／')
 
+        # Artifact
+        if '初回限定' in self.info['album']:
+            self.info['album'] = norm_album_name(album.discs[0].info['album'])
+
     @cached_property
     def _disc_no(self):
         # TODO: query music database
@@ -99,14 +103,14 @@ class AlbumInfo:
         self._files = files
         self.cover = files['cover']
         self.logs = files['logs']
+        self.mv = files['mv']
         self.booklets = files['booklets']
         if files['audio(lossless)']:
-            self.audio = files['audio(lossless)']
             assert not files['audio(lossy)']
+            self.audio = files['audio(lossless)']
         else:
-            self.audio = files['audio(lossy)']
             assert files['audio(lossy)']
-            assert not files['audio(lossless)']
+            self.audio = files['audio(lossy)']
 
         cues = files['cue']
         cue_audios = [
@@ -137,14 +141,16 @@ class AlbumInfo:
                 self.discs = [DiscInfo(album=self, audio=self.audio)]
             else:
                 # Splitted audio && Multiple disc
+                # TODO: example PK6/wac...
                 raise NotImplementedError()
 
         disc_albums = [norm_album_name(disc.info['album']) for disc in self.discs]
         disc_artists = [disc.info['artist'] for disc in self.discs]
+        most_freq_artist = max(set(disc_artists), key = disc_artists.count)
         assert len(set(disc_albums)) == 1, str(disc_albums)
-        assert len(set(disc_artists)) == 1, str(disc_artists) # TODO: shouldn't enforce
+        assert disc_artists.count(most_freq_artist) > 1
         self.name = disc_albums[0]
-        self.artist = disc_artists[0]
+        self.artist = most_freq_artist
 
     def cmds(self, output_dir, audio_only=False):
         retval = []
@@ -164,6 +170,11 @@ class AlbumInfo:
                 retval.append(f'mkdir -p "{album_dir}/logs"')
             for f in self.logs:
                 retval.append(f'cp "{f.fpath}" "{album_dir}/logs"')
+
+            if self.mv:
+                retval.append(f'mkdir -p "{album_dir}/mv"')
+            for f in self.mv:
+                retval.append(f'cp "{f.fpath}" "{album_dir}/mv"')
 
         for disc in self.discs:
             retval += disc.audio_cmds(album_dir)
