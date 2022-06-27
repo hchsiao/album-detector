@@ -91,6 +91,8 @@ class FileInfo:
             return True
         if 'data' == self.type_str and 'bmp' == self.fext:
             return True
+        if 'PC bitmap' in self.type_str and 'bmp' == self.fext:
+            return True
         return False
 
     @cached_property
