@@ -4,6 +4,7 @@ py_library(
     "album_info.py",
     "file_info.py",
     "utils.py",
+    "knowledge.py",
   ],
   visibility = ["//visibility:public"],
 )

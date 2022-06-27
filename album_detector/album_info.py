@@ -1,13 +1,7 @@
 from functools import cached_property
 import os
-import re
 
-from album_detector import utils
-
-def norm_album_name(name):
-    # Examples: Disc1, [DISC.1]
-    name = re.sub(r'[\[（(]?[Dd](isc|ISC)\.?\d[)）\]]?', '', name)
-    return name.strip()
+from album_detector import knowledge
 
 class DiscInfo:
     def __init__(self, album, cue=None, audio=None):
@@ -44,9 +38,9 @@ class DiscInfo:
         self.info['album'] = self.info['album'].replace('/', '／')
         self.info['artist'] = self.info['artist'].replace('/', '／')
 
-        # Artifact
+        # TODO: move to knowledge
         if '初回限定' in self.info['album']:
-            self.info['album'] = norm_album_name(album.discs[0].info['album'])
+            self.info['album'] = knowledge.norm_album_name(album.discs[0].info['album'])
 
     @cached_property
     def _disc_no(self):
@@ -55,6 +49,16 @@ class DiscInfo:
 
     def output_filename(self, track_no, ext):
         return 'disc%d-%.2d.%s' % (self.disc_no, track_no, ext)
+
+    def audio_cue(self):
+        if not self.audio_splitted:
+            return self.ffmpeg_cmds('')
+        else:
+            retval = []
+            for a in self.album.audio:
+                out_fname = self.output_filename(a.track_no, a.fext)
+                retval.append(f'cp "{a.fpath}" "{out_fname}"')
+            return retval
 
     def audio_cmds(self, output_dir):
         if not self.audio_splitted:
@@ -99,7 +103,22 @@ class DiscInfo:
         return retval
 
 class AlbumInfo:
-    def __init__(self, files):
+    def __init__(self, finfos):
+        knowledge.check_fileinfos(finfos)
+
+        files = {
+                'cover': [f for f in finfos if 'image(cover)' == f.ftype],
+                'logs': [f for f in finfos if 'log' == f.ftype or 'cue' == f.ftype],
+                'cue': [f for f in finfos if 'cue' == f.ftype],
+                'audio(lossless)': [f for f in finfos if 'audio(lossless)' == f.ftype],
+                'audio(lossy)': [f for f in finfos if 'audio(lossy)' == f.ftype],
+                'booklets': [f for f in finfos if 'image' == f.ftype],
+                'mv': [f for f in finfos if 'video' == f.ftype],
+                }
+
+        # Select one of the covers as the only cover
+        files['cover'] = files['cover'][0] if files['cover'] else None
+
         self._files = files
         self.cover = files['cover']
         self.logs = files['logs']
@@ -144,7 +163,7 @@ class AlbumInfo:
                 # TODO: example PK6/wac...
                 raise NotImplementedError()
 
-        disc_albums = [norm_album_name(disc.info['album']) for disc in self.discs]
+        disc_albums = [knowledge.norm_album_name(disc.info['album']) for disc in self.discs]
         disc_artists = [disc.info['artist'] for disc in self.discs]
         most_freq_artist = max(set(disc_artists), key = disc_artists.count)
         assert len(set(disc_albums)) == 1, str(disc_albums)
@@ -152,7 +171,13 @@ class AlbumInfo:
         self.name = disc_albums[0]
         self.artist = most_freq_artist
 
-    def cmds(self, output_dir, audio_only=False):
+    def export_cue(self):
+        retval = []
+        for disc in self.discs:
+            retval += disc.audio_cue()
+        return retval
+
+    def export_cmds(self, output_dir, audio_only=False):
         retval = []
         album_dir = os.path.join(output_dir, self.artist, self.name)
         retval.append(f'mkdir -p "{album_dir}"')

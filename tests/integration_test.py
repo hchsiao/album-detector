@@ -1,25 +1,24 @@
 import unittest
 import json
 
-from album_detector.utils import mkalbum, mkfilelist
+from album_detector import utils
 
 class IntegrationTest(unittest.TestCase):
     def setUp(self):
         super().setUp()
-
-    def test_all(self):
         f = open('tools/testdata.json', 'r')
-        testdata = json.loads(f.read())
+        self.testdata = json.loads(f.read())
         f.close()
 
-        n_total = len(testdata)
+    def test_export_cmds(self):
+        n_total = len(self.testdata)
         n_processing = 0
-        for path, golden in testdata.items():
+        self.assertNotEqual(n_total, 0)
+
+        for path, golden in self.testdata.items():
             n_processing += 1
             print(f'Processing {n_processing}/{n_total}...')
-            finfo = mkfilelist(path)
-            album = mkalbum(finfo)
-            cmds = album.cmds('/tmp', audio_only=False)
+            cmds = utils.handle_path(path, '/tmp', False)
             cmds = '\n'.join(cmds)
             try:
                 self.assertEqual(cmds, golden)
@@ -29,6 +28,11 @@ class IntegrationTest(unittest.TestCase):
                 with open('b', 'w') as f:
                     f.write(golden)
                 raise
+
+    def test_export_cue(self):
+        for path, golden in self.testdata.items():
+            print(path)
+            break
 
 
 if __name__ == '__main__':

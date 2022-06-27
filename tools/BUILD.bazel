@@ -11,5 +11,7 @@ testdata_genrule(
   name = "testdata",
   album_dirs = [
     # CONFIG: Add /path/to/music/collections
+    "/Volumes/Hitachi/BODY/OK0/PACK3",
+    "/Volumes/Hitachi/BODY/OK0/PACK6",
   ],
 )

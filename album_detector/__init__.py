@@ -3,18 +3,6 @@ import os
 
 from album_detector import utils
 
-def handle_item(path, output_dir, audio_only, dry_run):
-    path = os.path.normpath(path)
-    
-    finfo = utils.mkfilelist(path)
-    album = utils.mkalbum(finfo)
-    cmds = album.cmds(output_dir, audio_only=audio_only)
-    for cmd in cmds:
-        if dry_run:
-            print(cmd)
-        else:
-            os.system(cmd)
-
 def main():
     parser = argparse.ArgumentParser(description='TODO')
     parser.add_argument('path') 
@@ -25,7 +13,12 @@ def main():
     args = parser.parse_args()
     
     path = os.path.normpath(args.path)
-    handle_item(path, args.output_dir, args.audio_only, not args.doit)
+    cmds = utils.handle_path(path, args.output_dir, args.audio_only)
+    for cmd in cmds:
+        if args.doit:
+            os.system(cmd)
+        else:
+            print(cmd)
 
 if __name__ == "__main__":
     main()
