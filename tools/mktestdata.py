@@ -2,7 +2,7 @@ import argparse
 import os
 import json
 
-from album_detector.utils import mkalbum, mkfilelist
+from album_detector import utils
 
 def main():
     parser = argparse.ArgumentParser(description='TODO')
@@ -23,9 +23,7 @@ def main():
             print(f'Processing {n_processing}/{n_total}...')
             path = os.path.join(album_dir, d)
             try:
-                finfo = mkfilelist(path)
-                album = mkalbum(finfo)
-                cmds = album.cmds('/tmp', audio_only=False)
+                cmds = utils.handle_path(path, '/tmp', False)
                 cmds = '\n'.join(cmds)
                 new_testdata[path] = cmds
             except:
