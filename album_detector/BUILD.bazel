@@ -5,6 +5,7 @@ py_library(
     "file_info.py",
     "utils.py",
     "knowledge.py",
+    "export.py",
   ],
   visibility = ["//visibility:public"],
 )

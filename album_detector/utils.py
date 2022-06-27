@@ -5,6 +5,7 @@ import signal
 from album_detector import file_info
 from album_detector import album_info
 from album_detector import knowledge
+from album_detector import export
 
 def shell(cmd):
     with subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE) as p:
@@ -24,6 +25,6 @@ def handle_path(path, output_dir, audio_only):
     path = os.path.normpath(path)
     finfos = mkfilelist(path)
     album = album_info.AlbumInfo(finfos)
-    cmds = album.export_cmds(output_dir, audio_only=audio_only)
+    cmds = export.export_cmds(album, output_dir, audio_only=audio_only)
     return cmds
 

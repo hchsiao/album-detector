@@ -47,61 +47,6 @@ class DiscInfo:
         # TODO: query music database
         raise NotImplementedError()
 
-    def output_filename(self, track_no, ext):
-        return 'disc%d-%.2d.%s' % (self.disc_no, track_no, ext)
-
-    def audio_cue(self):
-        if not self.audio_splitted:
-            return self.ffmpeg_cmds('')
-        else:
-            retval = []
-            for a in self.album.audio:
-                out_fname = self.output_filename(a.track_no, a.fext)
-                retval.append(f'cp "{a.fpath}" "{out_fname}"')
-            return retval
-
-    def audio_cmds(self, output_dir):
-        if not self.audio_splitted:
-            return self.ffmpeg_cmds(output_dir)
-        else:
-            retval = []
-            for a in self.album.audio:
-                out_fname = self.output_filename(a.track_no, a.fext)
-                retval.append(f'cp "{a.fpath}" "{output_dir}/{out_fname}"')
-            return retval
-
-    def ffmpeg_cmds(self, output_dir):
-        retval = []
-        for track in self.tracks:
-            metadata = {
-                'artist': track['artist'],
-                'title': track['title'],
-                'album': track['album'],
-                'track': str(track['track']) + '/' + str(len(self.tracks))
-            }
-            if self.cue_embedded:
-                metadata['cuesheet'] = ''
-        
-            if 'genre' in track:
-                track['genre'] = track['genre']
-            if 'date' in track:
-                track['date'] = track['date']
-        
-            cmd = 'ffmpeg'
-            cmd += ' -i "%s"' % self.info['file']
-            cmd += ' -ss %.2d:%.2d:%.2d' % (track['start'] / 60 / 60, track['start'] / 60 % 60, int(track['start'] % 60))
-        
-            if 'duration' in track:
-                cmd += ' -t %.2d:%.2d:%.2d' % (track['duration'] / 60 / 60, track['duration'] / 60 % 60, int(track['duration'] % 60))
-        
-            cmd += ' ' + ' '.join('-metadata %s="%s"' % (k, v) for (k, v) in metadata.items())
-            out_fname = self.output_filename(track['track'], 'flac')
-            out_fname = os.path.join(output_dir, out_fname)
-            cmd += f' "{out_fname}"'
-        
-            retval.append(cmd)
-        return retval
-
 class AlbumInfo:
     def __init__(self, finfos):
         knowledge.check_fileinfos(finfos)
@@ -170,41 +115,4 @@ class AlbumInfo:
         assert disc_artists.count(most_freq_artist) >= 1
         self.name = disc_albums[0]
         self.artist = most_freq_artist
-
-    def export_cue(self):
-        retval = []
-        for disc in self.discs:
-            retval += disc.audio_cue()
-        return retval
-
-    def export_cmds(self, output_dir, audio_only=False):
-        retval = []
-        album_dir = os.path.join(output_dir, self.artist, self.name)
-        retval.append(f'mkdir -p "{album_dir}"')
-
-        if self.cover:
-            retval.append(f'cp "{self.cover.fpath}" "{album_dir}/cover.{self.cover.fext}"')
-
-        if not audio_only:
-            if self.cover or self.booklets:
-                retval.append(f'mkdir -p "{album_dir}/images"')
-            for f in self.booklets:
-                retval.append(f'cp "{f.fpath}" "{album_dir}/images"')
-
-            if self.logs:
-                retval.append(f'mkdir -p "{album_dir}/logs"')
-            for f in self.logs:
-                retval.append(f'cp "{f.fpath}" "{album_dir}/logs"')
-
-            if self.mv:
-                retval.append(f'mkdir -p "{album_dir}/mv"')
-            for f in self.mv:
-                retval.append(f'cp "{f.fpath}" "{album_dir}/mv"')
-
-        for disc in self.discs:
-            retval += disc.audio_cmds(album_dir)
-
-        retval.append(f'find "{album_dir}" -type f -exec chmod 0644 {{}} \\;')
-
-        return retval
 
