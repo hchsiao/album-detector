@@ -2,7 +2,7 @@ from functools import cached_property
 import os
 import re
 
-from . import utils
+from album_detector import utils
 
 def norm_album_name(name):
     # Examples: Disc1, [DISC.1]
@@ -148,7 +148,7 @@ class AlbumInfo:
         disc_artists = [disc.info['artist'] for disc in self.discs]
         most_freq_artist = max(set(disc_artists), key = disc_artists.count)
         assert len(set(disc_albums)) == 1, str(disc_albums)
-        assert disc_artists.count(most_freq_artist) > 1
+        assert disc_artists.count(most_freq_artist) >= 1
         self.name = disc_albums[0]
         self.artist = most_freq_artist
 

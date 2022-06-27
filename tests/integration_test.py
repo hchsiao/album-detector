@@ -1,14 +1,14 @@
 import unittest
 import json
 
-from album_detector import mkalbum
+from album_detector.utils import mkalbum, mkfilelist
 
-class TestAll(unittest.TestCase):
+class IntegrationTest(unittest.TestCase):
     def setUp(self):
         super().setUp()
 
     def test_all(self):
-        f = open('testdata.json', 'r')
+        f = open('tools/testdata.json', 'r')
         testdata = json.loads(f.read())
         f.close()
 
@@ -17,7 +17,8 @@ class TestAll(unittest.TestCase):
         for path, golden in testdata.items():
             n_processing += 1
             print(f'Processing {n_processing}/{n_total}...')
-            album = mkalbum(path)
+            finfo = mkfilelist(path)
+            album = mkalbum(finfo)
             cmds = album.cmds('/tmp', audio_only=False)
             cmds = '\n'.join(cmds)
             try:
@@ -28,6 +29,7 @@ class TestAll(unittest.TestCase):
                 with open('b', 'w') as f:
                     f.write(golden)
                 raise
+
 
 if __name__ == '__main__':
     unittest.main()

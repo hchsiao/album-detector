@@ -1,0 +1,16 @@
+py_library(
+  name = "album_detector_lib",
+  srcs = [
+    "album_info.py",
+    "file_info.py",
+    "utils.py",
+  ],
+  visibility = ["//visibility:public"],
+)
+
+py_binary(
+  name = "album_detector",
+  srcs = ["__init__.py"],
+  main = "__init__.py",
+  deps = [":album_detector_lib"],
+)

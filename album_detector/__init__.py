@@ -1,12 +1,13 @@
 import argparse
 import os
 
-from .utils import mkalbum
+from album_detector import utils
 
 def handle_item(path, output_dir, audio_only, dry_run):
     path = os.path.normpath(path)
     
-    album = mkalbum(path)
+    finfo = utils.mkfilelist(path)
+    album = utils.mkalbum(finfo)
     cmds = album.cmds(output_dir, audio_only=audio_only)
     for cmd in cmds:
         if dry_run:
@@ -25,3 +26,6 @@ def main():
     
     path = os.path.normpath(args.path)
     handle_item(path, args.output_dir, args.audio_only, not args.doit)
+
+if __name__ == "__main__":
+    main()

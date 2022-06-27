@@ -3,7 +3,7 @@ import os
 import json
 import re
 
-from . import utils
+from album_detector import utils
 
 class FileInfo:
     def __init__(self, fpath):
