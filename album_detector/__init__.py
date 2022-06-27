@@ -9,16 +9,26 @@ def main():
     parser.add_argument('--output-dir', default='.') 
     parser.add_argument('--audio-only', action='store_true')
     parser.add_argument('--doit', action='store_true')
+    parser.add_argument('--cue', action='store_true')
 
     args = parser.parse_args()
     
     path = os.path.normpath(args.path)
-    cmds = utils.handle_path(path, args.output_dir, args.audio_only)
-    for cmd in cmds:
+    if args.cue:
+        cue = utils.handle_path_cue(path)
+        with open('/tmp/test.cue', 'w') as f:
+            f.write(cue)
         if args.doit:
-            os.system(cmd)
+            utils.shell('open /tmp/test.cue')
         else:
-            print(cmd)
+            print(cue)
+    else:
+        cmds = utils.handle_path(path, args.output_dir, args.audio_only)
+        for cmd in cmds:
+            if args.doit:
+                os.system(cmd)
+            else:
+                print(cmd)
 
 if __name__ == "__main__":
     main()

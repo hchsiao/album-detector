@@ -25,22 +25,24 @@ def export_cmds(album, output_dir, audio_only=False):
             retval.append(f'cp "{f.fpath}" "{album_dir}/mv"')
 
     for disc in album.discs:
-        retval += audio_cmds(disc, album_dir)
+        retval += _disc_cmds(disc, album_dir)
 
     retval.append(f'find "{album_dir}" -type f -exec chmod 0644 {{}} \\;')
 
     return retval
 
 def export_cue(album):
-    retval = []
+    retval = ""
+    for disc in album.discs:
+        retval += _disc_cue(disc)
     return retval
 
 def _output_filename(disc, track_no, ext):
     return 'disc%d-%.2d.%s' % (disc.disc_no, track_no, ext)
 
-def audio_cmds(disc, output_dir):
+def _disc_cmds(disc, output_dir):
     if not disc.audio_splitted:
-        return ffmpeg_cmds(disc, output_dir)
+        return _ffmpeg_cmds(disc, output_dir)
     else:
         retval = []
         for a in disc.album.audio:
@@ -48,7 +50,40 @@ def audio_cmds(disc, output_dir):
             retval.append(f'cp "{a.fpath}" "{output_dir}/{out_fname}"')
         return retval
 
-def ffmpeg_cmds(disc, output_dir):
+def _disc_cue(disc):
+    if not disc.audio_splitted:
+        header_template = """PERFORMER "{artist}"
+TITLE "{album}"
+FILE "{filename}" WAVE"""
+        track_template = """
+  TRACK {track} AUDIO
+    TITLE "{title}"
+    PERFORMER "{artist}"
+    INDEX 01 {time}"""
+        
+        retval = header_template.format(**{
+                "artist": disc.album.artist,
+                "album": disc.tracks[0]['album'],
+                "filename": disc.info['file'],
+            })
+        for track in disc.tracks:
+            time = '%.2d:%.2d:%.2d' % (track['start'] / 60, track['start'] % 60, 0) # TODO: enhance precision
+            retval += track_template.format(**{
+                "track": track['track'],
+                "title": track['title'],
+                "artist": track['artist'],
+                "time": time,
+                })
+        return retval
+    else:
+        raise NotImplementedError()
+        retval = []
+        for a in disc.album.audio:
+            out_fname = _output_filename(disc, a.track_no, a.fext)
+            retval.append(f'cp "{a.fpath}" "{output_dir}/{out_fname}"')
+        return retval
+
+def _ffmpeg_cmds(disc, output_dir):
     retval = []
     for track in disc.tracks:
         metadata = {

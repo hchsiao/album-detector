@@ -28,3 +28,9 @@ def handle_path(path, output_dir, audio_only):
     cmds = export.export_cmds(album, output_dir, audio_only=audio_only)
     return cmds
 
+def handle_path_cue(path):
+    path = os.path.normpath(path)
+    finfos = mkfilelist(path)
+    album = album_info.AlbumInfo(finfos)
+    return export.export_cue(album)
+

@@ -251,6 +251,8 @@ class FileInfo:
             elif line.startswith('    PERFORMER '):
                 tracks[-1]['artist'] = ' '.join(line.strip().split(' ')[1:]).replace('"', '')
             elif line.startswith('    INDEX 00 '):
+                # TODO: https://wiki.hydrogenaud.io/index.php?title=EAC_Gap_Settings
+                # TODO: https://wiki.hydrogenaud.io/index.php?title=EAC_and_Cue_Sheets
                 pass
             elif line.startswith('    INDEX 01 '):
                 t = [int(n) for n in ' '.join(line.strip().split(' ')[2:]).replace('"', '').split(':')]

@@ -30,8 +30,12 @@ class IntegrationTest(unittest.TestCase):
                 raise
 
     def test_export_cue(self):
+        from album_detector import album_info
+        from album_detector import export
         for path, golden in self.testdata.items():
-            print(path)
+            fileinfos = utils.mkfilelist(path)
+            album = album_info.AlbumInfo(fileinfos)
+            print(export.export_cue(album))
             break
 
 
