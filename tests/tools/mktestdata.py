@@ -4,6 +4,11 @@ import json
 
 from album_detector import utils
 
+def album_cb(path):
+    cmds = utils.handle_path(path, '/tmp', False)
+    cmds = '\n'.join(cmds)
+    return cmds
+
 def main():
     parser = argparse.ArgumentParser(description='TODO')
     parser.add_argument('--album-dirs', nargs='+', default=[]) 
@@ -13,24 +18,7 @@ def main():
     
     testdata = {}
     for album_dir in args.album_dirs:
-        album_dir = os.path.normpath(album_dir)
-        new_testdata = {}
-
-        n_total = len(os.listdir(album_dir))
-        n_processing = 0
-        for d in os.listdir(album_dir):
-            n_processing += 1
-            print(f'Processing {n_processing}/{n_total}...')
-            path = os.path.join(album_dir, d)
-            try:
-                cmds = utils.handle_path(path, '/tmp', False)
-                cmds = '\n'.join(cmds)
-                new_testdata[path] = cmds
-            except KeyboardInterrupt:
-                print(f'Interrupted...')
-                exit(2)
-            except:
-                print(f'Skipping {path}')
+        new_testdata = utils.do_scan(album_dir, album_cb)
         testdata.update(new_testdata)
 
     if args.output:

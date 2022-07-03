@@ -34,3 +34,20 @@ def handle_path_cue(path):
     album = album_info.AlbumInfo(finfos)
     return export.export_cue(album)
 
+def do_scan(album_set, album_cb):
+    retval = {}
+    album_set = os.path.normpath(album_set)
+    n_total = len(os.listdir(album_set))
+    n_processing = 0
+    for d in os.listdir(album_set):
+        n_processing += 1
+        print(f'Processing {n_processing}/{n_total}...')
+        path = os.path.join(album_set, d)
+        try:
+            retval[path] = album_cb(path)
+        except KeyboardInterrupt:
+            print(f'Interrupted...')
+            return None
+        except:
+            print(f'Skipping {path}')
+    return retval
