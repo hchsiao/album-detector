@@ -3,6 +3,6 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 git_repository(
   name = "stable",
   remote = "https://github.com/hchsiao/album-detector",
-  commit = "08ea95100f419574d3ca0bb352f4deee076e0e58",
-  shallow_since = "1656319879 +0800",
+  commit = "9793918031d6c03b9eea6f8a406c1e7f2266e8ff",
+  shallow_since = "1656831809 +0800",
 )
