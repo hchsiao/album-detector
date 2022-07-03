@@ -1,0 +1,7 @@
+py_binary(
+  name = "mktestdata",
+  srcs = ["mktestdata.py"],
+  main = "mktestdata.py",
+  deps = ["@stable//album_detector:album_detector_lib"],
+  visibility = ["//visibility:public"],
+)

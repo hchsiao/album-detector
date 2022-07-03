@@ -128,6 +128,8 @@ class FileInfo:
         if 'Apple Desktop Services Store' == self.type_str:
             # .DS_Store
             return True
+        if 'AppleDouble encoded Macintosh file' == self.type_str:
+            return True
         return False
 
     @cached_property
@@ -248,6 +250,8 @@ class FileInfo:
                 pass
             elif line.startswith('    REM COMPOSER '):
                 pass
+            elif line.startswith('    FLAGS DCP'):
+                pass # digital copy permitted
             elif line.startswith('    TITLE '):
                 tracks[-1]['title'] = ' '.join(line.strip().split(' ')[1:]).replace('"', '')
             elif line.startswith('    PERFORMER '):

@@ -26,6 +26,8 @@ class DiscInfo:
 
             cue_info = audio.cue_info if audio and audio.embedded_cue else cue.cue_info
             self.info, self.tracks = cue_info
+            if 'artist' not in self.info:
+                self.info['artist'] = self.tracks[0]['artist']
 
             if self.cue_embedded:
                 self.info['file'] = audio.fpath

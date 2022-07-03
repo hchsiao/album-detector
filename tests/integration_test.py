@@ -6,7 +6,7 @@ from album_detector import utils
 class IntegrationTest(unittest.TestCase):
     def setUp(self):
         super().setUp()
-        f = open('tools/testdata.json', 'r')
+        f = open('tests/testdata.json', 'r')
         self.testdata = json.loads(f.read())
         f.close()
 
@@ -32,11 +32,11 @@ class IntegrationTest(unittest.TestCase):
     def test_export_cue(self):
         from album_detector import album_info
         from album_detector import export
-        for path, golden in self.testdata.items():
-            fileinfos = utils.mkfilelist(path)
-            album = album_info.AlbumInfo(fileinfos)
-            print(export.export_cue(album))
-            break
+        #for path, golden in self.testdata.items():
+        #    fileinfos = utils.mkfilelist(path)
+        #    album = album_info.AlbumInfo(fileinfos)
+        #    print(export.export_cue(album))
+        #    break
 
 
 if __name__ == '__main__':

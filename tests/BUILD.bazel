@@ -1,3 +1,12 @@
+load("//tests/tools:rules_testdata.bzl", "testdata_genrule")
+
+testdata_genrule(
+  name = "testdata",
+  album_dirs = [
+    # CONFIG: Add /path/to/music/collections
+  ],
+)
+
 py_test(
     name = "integration_test",
     srcs = ["integration_test.py"],
@@ -5,6 +14,6 @@ py_test(
       "//album_detector:album_detector_lib",
     ],
     data = [
-      "//tools:testdata"
+      ":testdata"
     ],
 )

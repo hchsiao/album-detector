@@ -26,12 +26,16 @@ def main():
                 cmds = utils.handle_path(path, '/tmp', False)
                 cmds = '\n'.join(cmds)
                 new_testdata[path] = cmds
+            except KeyboardInterrupt:
+                print(f'Interrupted...')
+                exit(2)
             except:
                 print(f'Skipping {path}')
         testdata.update(new_testdata)
 
-    with open(args.output, 'w') as f:
-        f.write(json.dumps(testdata))
+    if args.output:
+        with open(args.output, 'w') as f:
+            f.write(json.dumps(testdata))
 
 if __name__ == '__main__':
     main()
