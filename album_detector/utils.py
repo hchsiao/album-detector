@@ -2,10 +2,22 @@ import os
 import subprocess
 import signal
 
+import chardet
+
 from album_detector import file_info
 from album_detector import album_info
 from album_detector import knowledge
 from album_detector import export
+
+def detect_encoding(fpath):
+    with open(fpath, 'rb') as f:
+        charset = chardet.detect(f.read())
+        encoding = charset['encoding']
+        confidence = charset['confidence']
+        language = charset['language']
+        if confidence > 0.9:
+            return encoding
+    return None
 
 def shell(cmd):
     with subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE) as p:

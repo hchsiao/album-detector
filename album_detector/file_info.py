@@ -211,7 +211,16 @@ class FileInfo:
                 with open(self.fpath, 'r') as f:
                     cue_str = f.read()
             except UnicodeDecodeError:
-                with open(self.fpath, 'r', encoding="ISO-8859-1") as f:
+                encoding = utils.detect_encoding(self.fpath)
+                if not encoding:
+                    for f in os.listdir(self.dirname):
+                        if f.endswith('.cue'):
+                            p = os.path.join(self.dirname, f)
+                            enc = utils.detect_encoding(p)
+                            if enc:
+                                encoding = enc
+                assert encoding
+                with open(self.fpath, 'r', encoding=encoding) as f:
                     cue_str = f.read()
         elif self.is_audio:
             cue_str = self.embedded_cue
