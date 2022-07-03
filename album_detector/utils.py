@@ -15,8 +15,7 @@ def detect_encoding(fpath):
         encoding = charset['encoding']
         confidence = charset['confidence']
         language = charset['language']
-        if confidence > 0.9:
-            return encoding
+        return encoding, confidence
     return None
 
 def shell(cmd):

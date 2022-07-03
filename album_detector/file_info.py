@@ -5,6 +5,74 @@ import re
 
 from album_detector import utils
 
+def smart_read(filename, encoding='utf-8'):
+    try:
+        with open(filename, 'r', encoding=encoding) as f:
+            return f.read()
+    except UnicodeDecodeError as e:
+        if encoding.lower().startswith('gb') and encoding != 'gb18030':
+            return smart_read(filename, 'gb18030')
+        else:
+            raise e
+
+def parse_cue(cue_str):
+    cue_str = cue_str.replace('\ufeff', '') # Remove BOM
+    cue_str = cue_str.replace('\r\n', '\n')
+    d = cue_str.split('\n')
+    general = {}
+    tracks = []
+    
+    for line in d:
+        if not line:
+            continue
+        elif line.startswith('REM GENRE '):
+            general['genre'] = ' '.join(line.split(' ')[2:])
+        elif line.startswith('REM DATE '):
+            general['date'] = ' '.join(line.split(' ')[2:])
+        elif line.startswith('REM DISCID '):
+            pass
+        elif line.startswith('REM COMMENT '):
+            pass
+        elif line.startswith('REM COMPOSER '):
+            pass
+        elif line.startswith('CATALOG '):
+            pass
+        elif line.startswith('PERFORMER '):
+            general['artist'] = ' '.join(line.split(' ')[1:]).replace('"', '')
+        elif line.startswith('TITLE '):
+            general['album'] = ' '.join(line.split(' ')[1:]).replace('"', '')
+        elif line.startswith('FILE '):
+            general['file'] = ' '.join(line.split(' ')[1:-1]).replace('"', '')
+        elif line.startswith('  TRACK '):
+            track = general.copy()
+            track['track'] = int(line.strip().split(' ')[1], 10)
+            tracks.append(track)
+        elif line.startswith('    ISRC '):
+            pass
+        elif line.startswith('    REM COMPOSER '):
+            pass
+        elif line.startswith('    FLAGS DCP'):
+            pass # digital copy permitted
+        elif line.startswith('    TITLE '):
+            tracks[-1]['title'] = ' '.join(line.strip().split(' ')[1:]).replace('"', '')
+        elif line.startswith('    PERFORMER '):
+            tracks[-1]['artist'] = ' '.join(line.strip().split(' ')[1:]).replace('"', '')
+        elif line.startswith('    INDEX 00 '):
+            # TODO: https://wiki.hydrogenaud.io/index.php?title=EAC_Gap_Settings
+            # TODO: https://wiki.hydrogenaud.io/index.php?title=EAC_and_Cue_Sheets
+            pass
+        elif line.startswith('    INDEX 01 '):
+            t = [int(n) for n in ' '.join(line.strip().split(' ')[2:]).replace('"', '').split(':')]
+            tracks[-1]['start'] = 60 * t[0] + t[1] + t[2] / 100.0
+        else:
+            assert False, f'Unknown cue line: {line} (bytes: {line.encode()})'
+    
+    for i in range(len(tracks)):
+        if i != len(tracks) - 1:
+            tracks[i]['duration'] = tracks[i + 1]['start'] - tracks[i]['start']
+    
+    return general, tracks
+
 class FileInfo:
     def __init__(self, fpath):
         self.fpath = fpath
@@ -113,6 +181,8 @@ class FileInfo:
 
     @cached_property
     def is_garbage(self):
+        if 'lrc' == self.fext and 'text' in self.type_str:
+            return True
         if 'fpl' == self.fext and 'data' == self.type_str:
             return True
         if 'Thumbs.db' == self.basename:
@@ -208,76 +278,24 @@ class FileInfo:
     def cue_info(self):
         if self.is_cue:
             try:
-                with open(self.fpath, 'r') as f:
-                    cue_str = f.read()
+                cue_str = smart_read(self.fpath)
             except UnicodeDecodeError:
-                encoding = utils.detect_encoding(self.fpath)
-                if not encoding:
+                encoding, confidence = utils.detect_encoding(self.fpath)
+                if confidence < 0.9:
                     for f in os.listdir(self.dirname):
-                        if f.endswith('.cue'):
+                        if f.lower().endswith('.cue'):
                             p = os.path.join(self.dirname, f)
-                            enc = utils.detect_encoding(p)
-                            if enc:
+                            enc, confid = utils.detect_encoding(p)
+                            hit = False
+                            _cue = smart_read(p, enc)
+                            _info, _trk = parse_cue(_cue)
+                            hit = os.path.isfile(os.path.join(self.dirname, _info['file']))
+                            if hit:
                                 encoding = enc
-                assert encoding
-                with open(self.fpath, 'r', encoding=encoding) as f:
-                    cue_str = f.read()
+                                break
+                assert encoding, f"Debug info: {self.fpath}"
+                cue_str = smart_read(self.fpath, encoding)
         elif self.is_audio:
             cue_str = self.embedded_cue
-        cue_str = cue_str.replace('\ufeff', '') # Remove BOM
-        cue_str = cue_str.replace('\r\n', '\n')
-        d = cue_str.split('\n')
-        general = {}
-        tracks = []
-        
-        for line in d:
-            if not line:
-                continue
-            elif line.startswith('REM GENRE '):
-                general['genre'] = ' '.join(line.split(' ')[2:])
-            elif line.startswith('REM DATE '):
-                general['date'] = ' '.join(line.split(' ')[2:])
-            elif line.startswith('REM DISCID '):
-                pass
-            elif line.startswith('REM COMMENT '):
-                pass
-            elif line.startswith('REM COMPOSER '):
-                pass
-            elif line.startswith('CATALOG '):
-                pass
-            elif line.startswith('PERFORMER '):
-                general['artist'] = ' '.join(line.split(' ')[1:]).replace('"', '')
-            elif line.startswith('TITLE '):
-                general['album'] = ' '.join(line.split(' ')[1:]).replace('"', '')
-            elif line.startswith('FILE '):
-                general['file'] = ' '.join(line.split(' ')[1:-1]).replace('"', '')
-            elif line.startswith('  TRACK '):
-                track = general.copy()
-                track['track'] = int(line.strip().split(' ')[1], 10)
-                tracks.append(track)
-            elif line.startswith('    ISRC '):
-                pass
-            elif line.startswith('    REM COMPOSER '):
-                pass
-            elif line.startswith('    FLAGS DCP'):
-                pass # digital copy permitted
-            elif line.startswith('    TITLE '):
-                tracks[-1]['title'] = ' '.join(line.strip().split(' ')[1:]).replace('"', '')
-            elif line.startswith('    PERFORMER '):
-                tracks[-1]['artist'] = ' '.join(line.strip().split(' ')[1:]).replace('"', '')
-            elif line.startswith('    INDEX 00 '):
-                # TODO: https://wiki.hydrogenaud.io/index.php?title=EAC_Gap_Settings
-                # TODO: https://wiki.hydrogenaud.io/index.php?title=EAC_and_Cue_Sheets
-                pass
-            elif line.startswith('    INDEX 01 '):
-                t = [int(n) for n in ' '.join(line.strip().split(' ')[2:]).replace('"', '').split(':')]
-                tracks[-1]['start'] = 60 * t[0] + t[1] + t[2] / 100.0
-            else:
-                assert False, f'Unknown cue line: {line} (bytes: {line.encode()})'
-        
-        for i in range(len(tracks)):
-            if i != len(tracks) - 1:
-                tracks[i]['duration'] = tracks[i + 1]['start'] - tracks[i]['start']
-        
-        return general, tracks
+        return parse_cue(cue_str)
 

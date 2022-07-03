@@ -18,6 +18,7 @@ class IntegrationTest(unittest.TestCase):
         for path, golden in self.testdata.items():
             n_processing += 1
             print(f'Processing {n_processing}/{n_total}...')
+            print(f'{path}')
             cmds = utils.handle_path(path, '/tmp', False)
             cmds = '\n'.join(cmds)
             try:

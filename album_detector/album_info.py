@@ -82,7 +82,10 @@ class AlbumInfo:
         cue_audios = [
                 os.path.join(cue.dirname, cue.cue_info[0]['file'])
                 for cue in cues]
-        # TODO: may need to fix filename if all are wrong
+        # Try to fix audio file suffix
+        #for ca in cue_audios:
+        #    print(ca)
+        #    raise NotImplementedError()
 
         self.n_disc = 0
         embedded_cues = [a.embedded_cue for a in self.audio]
