@@ -99,6 +99,7 @@ class AlbumInfo:
                 if os.path.isfile(ca):
                     self.discs.append(DiscInfo(album=self, cue=cue))
         else:
+            assert not cues
             track_no_list = []
             for a in self.audio:
                 track_no_list.append(a.track_no)
