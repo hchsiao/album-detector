@@ -1,5 +1,8 @@
 import re
 
+def various_artist_name():
+    return 'Various'
+
 def check_fileinfos(fileinfos):
     # Assume basenames are unique
     basenames = [f.basename for f in fileinfos]

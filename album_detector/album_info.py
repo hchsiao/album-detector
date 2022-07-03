@@ -14,11 +14,11 @@ class DiscInfo:
             track_albums = [a.audio_info['album'] for a in audio]
             track_artists = [a.audio_info['artist'] for a in audio]
             assert len(set(track_albums)) == 1, str(track_albums)
-            assert len(set(track_artists)) == 1, str(track_artists) # TODO: shouldn't enforce
-            self.info = {
-                    'album': track_albums[0],
-                    'artist': track_artists[0],
-                    }
+            self.info = {'album': track_albums[0]}
+            if len(set(track_artists)) == 1:
+                self.info['artist'] = track_artists[0]
+            else:
+                self.info['artist'] = knowledge.various_artist_name()
         else:
             self.audio_splitted = False
             assert cue or audio.embedded_cue # TODO: shouldn't enforce

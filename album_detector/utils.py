@@ -34,7 +34,7 @@ def handle_path_cue(path):
     album = album_info.AlbumInfo(finfos)
     return export.export_cue(album)
 
-def do_scan(album_set, album_cb):
+def do_scan(album_set, album_cb, include_failed=False, limit=None):
     retval = {}
     album_set = os.path.normpath(album_set)
     n_total = len(os.listdir(album_set))
@@ -50,4 +50,8 @@ def do_scan(album_set, album_cb):
             return None
         except:
             print(f'Skipping {path}')
+            if include_failed:
+                retval[path] = None
+        if type(limit) is int and n_processing >= limit:
+            break
     return retval
