@@ -2,6 +2,7 @@ from functools import cached_property
 import os
 
 from album_detector import knowledge
+from album_detector import file_info
 
 class DiscInfo:
     def __init__(self, album, cue=None, audio=None):
@@ -79,13 +80,19 @@ class AlbumInfo:
             self.audio = files['audio(lossy)']
 
         cues = files['cue']
-        cue_audios = [
-                os.path.join(cue.dirname, cue.cue_info[0]['file'])
-                for cue in cues]
-        # Try to fix audio file suffix
-        #for ca in cue_audios:
-        #    print(ca)
-        #    raise NotImplementedError()
+        cue_audios = []
+        for cue in cues:
+            cue_audio = os.path.join(cue.dirname, cue.cue_info[0]['file'])
+            if os.path.isfile(cue_audio):
+                cue_audios.append(cue_audio)
+            else: # Try to fix audio file suffix
+                audio_found = False
+                for f in os.listdir(cue.dirname):
+                    f = file_info.FileInfo(os.path.join(cue.dirname, f))
+                    if f.is_audio:
+                        assert not audio_found
+                        audio_found = True
+                        cue_audios.append(f.fpath)
 
         self.n_disc = 0
         embedded_cues = [a.embedded_cue for a in self.audio]
