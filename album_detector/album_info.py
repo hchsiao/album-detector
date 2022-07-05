@@ -73,10 +73,10 @@ class AlbumInfo:
         self.mv = files['mv']
         self.booklets = files['booklets']
         if files['audio(lossless)']:
-            assert not files['audio(lossy)']
+            assert not files['audio(lossy)'], 'should not contain both lossless and lossy audios'
             self.audio = files['audio(lossless)']
         else:
-            assert files['audio(lossy)']
+            assert files['audio(lossy)'], 'no audio file at all?'
             self.audio = files['audio(lossy)']
 
         cues = files['cue']
@@ -86,13 +86,15 @@ class AlbumInfo:
             if os.path.isfile(cue_audio):
                 cue_audios.append(cue_audio)
             else: # Try to fix audio file suffix
-                audio_found = False
+                audio_found = []
                 for f in os.listdir(cue.dirname):
                     f = file_info.FileInfo(os.path.join(cue.dirname, f))
                     if f.is_audio:
-                        assert not audio_found
-                        audio_found = True
+                        assert f.fpath not in audio_found, 'same disc audio with different format?'
+                        audio_found.append(f.fpath)
                         cue_audios.append(f.fpath)
+        if len(set(cue_audios)) == 1 and len(cue_audios) > 1: # many cue point to same audio
+            cue_audios = [cue_audios[0]] + [''] * (len(cues) - 1)
 
         self.n_disc = 0
         embedded_cues = [a.embedded_cue for a in self.audio]

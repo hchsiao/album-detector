@@ -145,6 +145,8 @@ class FileInfo:
 
     @cached_property
     def is_video(self):
+        if 'iso' == self.fext: # TODO: not necessarily a video
+            return True
         if 'mkv' == self.fext:
             return True
         return False
@@ -152,6 +154,8 @@ class FileInfo:
     @cached_property
     def is_image(self):
         if 'TIFF image' in self.type_str:
+            return True
+        if 'JPEG 2000' in self.type_str:
             return True
         if 'JPEG image' in self.type_str:
             return True
@@ -220,6 +224,8 @@ class FileInfo:
     def is_lossy_audio(self):
         if 'mp3' == self.fext and 'MPEG ADTS, layer III' in self.type_str:
             return True
+        if 'mp3' == self.fext and 'Audio file with ID3' in self.type_str:
+            return True
         return False
 
     @cached_property
@@ -281,7 +287,9 @@ class FileInfo:
                 cue_str = smart_read(self.fpath)
             except UnicodeDecodeError:
                 encoding, confidence = utils.detect_encoding(self.fpath)
-                if confidence < 0.9:
+                if encoding is None:
+                    encoding = utils.get_hint('encoding', f'Need hint for charset: {self.fpath}')
+                elif confidence < 90:
                     for f in os.listdir(self.dirname):
                         if f.lower().endswith('.cue'):
                             p = os.path.join(self.dirname, f)

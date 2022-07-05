@@ -2,21 +2,38 @@ import os
 import subprocess
 import signal
 
+# For charset detection
 import chardet
+import icu
 
 from album_detector import file_info
 from album_detector import album_info
 from album_detector import knowledge
 from album_detector import export
 
+def get_hint(name, message):
+    raise NotImplementedError()
+
 def detect_encoding(fpath):
     with open(fpath, 'rb') as f:
-        charset = chardet.detect(f.read())
-        encoding = charset['encoding']
-        confidence = charset['confidence']
-        language = charset['language']
-        return encoding, confidence
-    return None
+        data = f.read()
+        icu_encoding = icu.CharsetDetector(data).detect().getName()
+        icu_confidence = icu.CharsetDetector(data).detect().getConfidence()
+        icu_language = icu.CharsetDetector(data).detect().getLanguage()
+        if icu_confidence > 60:
+            return icu_encoding, icu_confidence
+        else:
+            charset = chardet.detect(data)
+            chardet_encoding = charset['encoding']
+            chardet_confidence = int(charset['confidence'] * 100)
+            chardet_language = charset['language']
+            if icu_confidence < 45 and chardet_confidence < 45:
+                return get_hint('encoding', f'Need hint for charset: {fpath}'), -1
+            elif icu_confidence > chardet_confidence:
+                return icu_encoding, icu_confidence
+            else:
+                return chardet_encoding, chardet_confidence
+    raise RuntimeError()
 
 def shell(cmd):
     with subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE) as p:

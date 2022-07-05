@@ -9,6 +9,7 @@ class IntegrationTest(unittest.TestCase):
         f = open('tests/testdata.json', 'r')
         self.testdata = json.loads(f.read())
         f.close()
+        self.maxDiff = None
 
     def test_export_cmds(self):
         n_total = len(self.testdata)

@@ -6,4 +6,4 @@ An expert system for recognizing/labeling musics, which may be scattered in the 
 - Extract embedded cover image (for airsonic)
 - What happens if dummy CUE exists with splitted/CUE-embedded audio?
 - metadata: maintain a single source of trust
-  - Connect musicbrainz
+  - Connect musicbrainz (consider using "album-hint.txt" instead)
