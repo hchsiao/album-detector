@@ -2,9 +2,6 @@
 An expert system for recognizing/labeling musics, which may be scattered in the file system.
 
 ## TODO
-### local mode
-- read/interactive-create `album-hint.txt`
-
 ### streaming mode
 - Check https://github.com/flacon/flacon/issues/41
 - Extract embedded cover image (for airsonic)

@@ -1,6 +1,10 @@
 import os
 import subprocess
 import signal
+import json
+
+# For entering hints interactively
+import inquirer
 
 # For charset detection
 import chardet
@@ -11,8 +15,38 @@ from album_detector import album_info
 from album_detector import knowledge
 from album_detector import export
 
-def get_hint(name, message):
-    raise NotImplementedError()
+def get_hint(path, name, message, guess=None):
+    hint_file = os.path.join(os.path.dirname(path), 'album-hint.json')
+    hints = {}
+    if os.path.isfile(hint_file):
+        with open(hint_file, 'r') as f:
+            hints = json.load(f)
+    if name not in hints:
+        hints[name] = _get_new_hint(name, message, guess)
+        with open(hint_file, 'w') as f:
+            f.write(json.dumps(hints))
+    return hints[name]
+
+def _get_new_hint(name, message, guess):
+    if guess:
+        questions = [
+            inquirer.List(
+                name,
+                message=message,
+                choices=guess,
+            ),
+        ]
+    else:
+        questions = [
+            inquirer.Text(
+                name,
+                message=message,
+            ),
+        ]
+    hints = inquirer.prompt(questions)
+    if hints is None:
+        exit(1)
+    return hints[name]
 
 def detect_encoding(fpath):
     with open(fpath, 'rb') as f:
@@ -28,7 +62,7 @@ def detect_encoding(fpath):
             chardet_confidence = int(charset['confidence'] * 100)
             chardet_language = charset['language']
             if icu_confidence < 45 and chardet_confidence < 45:
-                return get_hint('encoding', f'Need hint for charset: {fpath}'), -1
+                return get_hint(fpath, 'encoding', f'Need hint for charset: {fpath}'), -1
             elif icu_confidence > chardet_confidence:
                 return icu_encoding, icu_confidence
             else:

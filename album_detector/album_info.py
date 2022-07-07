@@ -3,6 +3,7 @@ import os
 
 from album_detector import knowledge
 from album_detector import file_info
+from album_detector import utils
 
 class DiscInfo:
     def __init__(self, album, cue=None, audio=None):
@@ -126,7 +127,11 @@ class AlbumInfo:
         disc_albums = [knowledge.norm_album_name(disc.info['album']) for disc in self.discs]
         disc_artists = [disc.info['artist'] for disc in self.discs]
         most_freq_artist = max(set(disc_artists), key = disc_artists.count)
-        assert len(set(disc_albums)) == 1, str(disc_albums)
+        album_names = set(disc_albums)
+        if len(album_names) == 1:
+            self.name = disc_albums[0]
+        else:
+            self.name = utils.get_hint(self.audio[0].fpath, 'album_name', 'Choose album name for discs', album_names)
         assert disc_artists.count(most_freq_artist) >= 1
         self.name = disc_albums[0]
         self.artist = most_freq_artist

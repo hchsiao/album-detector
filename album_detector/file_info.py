@@ -181,6 +181,8 @@ class FileInfo:
             return True
         if 'log' == self.fext:
             return True
+        if 'album-hint.json' == self.basename:
+            return True
         return False
 
     @cached_property
@@ -288,7 +290,7 @@ class FileInfo:
             except UnicodeDecodeError:
                 encoding, confidence = utils.detect_encoding(self.fpath)
                 if encoding is None:
-                    encoding = utils.get_hint('encoding', f'Need hint for charset: {self.fpath}')
+                    encoding = utils.get_hint(self.fpath, 'encoding', f'Need hint for charset: {self.fpath}')
                 elif confidence < 90:
                     for f in os.listdir(self.dirname):
                         if f.lower().endswith('.cue'):
