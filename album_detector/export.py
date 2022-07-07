@@ -67,7 +67,7 @@ FILE "{filename}" WAVE"""
                 "filename": disc.info['file'],
             })
         for track in disc.tracks:
-            time = '%.2d:%.2d:%.2d' % (track['start'] / 60, track['start'] % 60, 0) # TODO: enhance precision
+            time = '%.2d:%.2d:%.2d' % (track['start'] / 60 / 100, track['start'] / 100 % 60, track['start'] % 100)
             retval += track_template.format(**{
                 "track": track['track'],
                 "title": track['title'],
@@ -102,10 +102,10 @@ def _ffmpeg_cmds(disc, output_dir):
     
         cmd = 'ffmpeg'
         cmd += ' -i "%s"' % disc.info['file']
-        cmd += ' -ss %.2d:%.2d:%.2d' % (track['start'] / 60 / 60, track['start'] / 60 % 60, int(track['start'] % 60))
+        cmd += ' -ss %.2d:%.2d:%.2d' % (track['start'] / 60 / 60 / 100, track['start'] / 60 / 100 % 60, int(track['start'] / 100 % 60))
     
         if 'duration' in track:
-            cmd += ' -t %.2d:%.2d:%.2d' % (track['duration'] / 60 / 60, track['duration'] / 60 % 60, int(track['duration'] % 60))
+            cmd += ' -t %.2d:%.2d:%.2d' % (track['duration'] / 60 / 60 / 100, track['duration'] / 60 / 100 % 60, int(track['duration'] / 100 % 60))
     
         cmd += ' ' + ' '.join('-metadata %s="%s"' % (k, v) for (k, v) in metadata.items())
         out_fname = _output_filename(disc, track['track'], 'flac')

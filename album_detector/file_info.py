@@ -63,7 +63,7 @@ def parse_cue(cue_str):
             pass
         elif line.startswith('    INDEX 01 '):
             t = [int(n) for n in ' '.join(line.strip().split(' ')[2:]).replace('"', '').split(':')]
-            tracks[-1]['start'] = 60 * t[0] + t[1] + t[2] / 100.0
+            tracks[-1]['start'] = 100 * (60 * t[0] + t[1]) + t[2]
         else:
             assert False, f'Unknown cue line: {line} (bytes: {line.encode()})'
     
