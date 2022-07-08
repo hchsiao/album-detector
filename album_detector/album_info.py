@@ -14,7 +14,7 @@ class DiscInfo:
             self.audio_splitted = True
             self.cue_embedded = False
             track_albums = [a.audio_info['album'] for a in audio]
-            track_artists = [a.audio_info['artist'] for a in audio]
+            track_artists = [a.audio_info['artist'] for a in audio if 'artist' in a.audio_info]
             assert len(set(track_albums)) == 1, str(track_albums)
             self.info = {'album': track_albums[0]}
             if len(set(track_artists)) == 1:
@@ -41,10 +41,6 @@ class DiscInfo:
         # slashs are not supported in filesystems
         self.info['album'] = self.info['album'].replace('/', '／')
         self.info['artist'] = self.info['artist'].replace('/', '／')
-
-        # TODO: move to knowledge
-        if '初回限定' in self.info['album']:
-            self.info['album'] = knowledge.norm_album_name(album.discs[0].info['album'])
 
     @cached_property
     def _disc_no(self):
@@ -131,7 +127,7 @@ class AlbumInfo:
         if len(album_names) == 1:
             self.name = disc_albums[0]
         else:
-            self.name = utils.get_hint(self.audio[0].fpath, 'album_name', 'Choose album name for discs', album_names)
+            self.name = utils.get_hint(self.audio[0].fpath, 'album_name', 'Choose album name for discs', album_names, find_common=True)
         assert disc_artists.count(most_freq_artist) >= 1
         self.name = disc_albums[0]
         self.artist = most_freq_artist

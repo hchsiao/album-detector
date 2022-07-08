@@ -13,9 +13,12 @@ def check_fileinfos(fileinfos):
 
 
 def norm_album_name(name):
+    _left_brac = r'[＜（\(\[]'
+    _right_brac = r'[＞）\)\]]'
     # Examples: Disc1, [DISC.1]
-    name = re.sub(r'[\[（(]?[Dd](isc|ISC)[ \.]?\d[)）\]]?', '', name)
+    name = re.sub(fr'{_left_brac}?[Dd](isc|ISC|isk|ISK)[ \.]*\d?{_right_brac}?', '', name)
     # Examples: CD1
-    name = re.sub(r'[\[（(]?[Cc][Dd]\.?\d[)）\]]?', '', name)
+    name = re.sub(fr'{_left_brac}?[Cc][Dd][ \.]*\d{_right_brac}?', '', name)
+    name = re.sub(fr'{_left_brac}完全収録盤{_right_brac}', '', name)
     return name.strip()
 

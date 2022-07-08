@@ -5,16 +5,6 @@ import re
 
 from album_detector import utils
 
-def smart_read(filename, encoding='utf-8'):
-    try:
-        with open(filename, 'r', encoding=encoding) as f:
-            return f.read()
-    except UnicodeDecodeError as e:
-        if encoding.lower().startswith('gb') and encoding != 'gb18030':
-            return smart_read(filename, 'gb18030')
-        else:
-            raise e
-
 def parse_cue(cue_str):
     cue_str = cue_str.replace('\ufeff', '') # Remove BOM
     cue_str = cue_str.replace('\r\n', '\n')
@@ -145,6 +135,8 @@ class FileInfo:
 
     @cached_property
     def is_video(self):
+        if 'mds' == self.fext: # disc image
+            return True
         if 'iso' == self.fext: # TODO: not necessarily a video
             return True
         if 'mkv' == self.fext:
@@ -224,6 +216,8 @@ class FileInfo:
 
     @cached_property
     def is_lossy_audio(self):
+        if 'm4a' == self.fext and 'Apple iTunes' in self.type_str:
+            return True # TODO: this can also be ALAC, which is lossless
         if 'mp3' == self.fext and 'MPEG ADTS, layer III' in self.type_str:
             return True
         if 'mp3' == self.fext and 'Audio file with ID3' in self.type_str:
@@ -286,25 +280,26 @@ class FileInfo:
     def cue_info(self):
         if self.is_cue:
             try:
-                cue_str = smart_read(self.fpath)
+                cue_str = utils.smart_read(self.fpath)
             except UnicodeDecodeError:
                 encoding, confidence = utils.detect_encoding(self.fpath)
-                if encoding is None:
-                    encoding = utils.get_hint(self.fpath, 'encoding', f'Need hint for charset: {self.fpath}')
-                elif confidence < 90:
+                assert encoding is not None
+                if confidence < 90:
                     for f in os.listdir(self.dirname):
                         if f.lower().endswith('.cue'):
                             p = os.path.join(self.dirname, f)
                             enc, confid = utils.detect_encoding(p)
                             hit = False
-                            _cue = smart_read(p, enc)
+                            _cue = utils.smart_read(p, enc)
                             _info, _trk = parse_cue(_cue)
                             hit = os.path.isfile(os.path.join(self.dirname, _info['file']))
                             if hit:
+                                # TODO: review and remove this block
+                                assert encoding == enc, 'If this never got triggered, this block can be safely removed'
                                 encoding = enc
                                 break
                 assert encoding, f"Debug info: {self.fpath}"
-                cue_str = smart_read(self.fpath, encoding)
+                cue_str = utils.smart_read(self.fpath, encoding, robust=True)
         elif self.is_audio:
             cue_str = self.embedded_cue
         return parse_cue(cue_str)

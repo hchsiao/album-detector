@@ -15,25 +15,64 @@ from album_detector import album_info
 from album_detector import knowledge
 from album_detector import export
 
-def get_hint(path, name, message, guess=None):
-    hint_file = os.path.join(os.path.dirname(path), 'album-hint.json')
+def smart_read(filename, encoding='utf-8', robust=False):
+    try:
+        with open(filename, 'r', encoding=encoding) as f:
+            return f.read()
+    except UnicodeDecodeError:
+        if encoding.lower().startswith('gb') and encoding != 'gb18030':
+            return smart_read(filename, 'gb18030', robust)
+        elif robust:
+            with open(filename, 'rb') as f:
+                data = f.read()
+                return str(icu.CharsetDetector(data).detect())
+        else:
+            raise
+
+_HINT_FILE = 'album-hint.json'
+
+def has_hint(path, name):
+    hint_file = os.path.join(os.path.dirname(path), _HINT_FILE)
+    if os.path.isfile(hint_file):
+        with open(hint_file, 'r') as f:
+            hints = json.load(f)
+            return name in hints
+    return False
+
+def erase_hint(path, name):
+    hint_file = os.path.join(os.path.dirname(path), _HINT_FILE)
+    if os.path.isfile(hint_file):
+        with open(hint_file, 'r') as f:
+            hints = json.load(f)
+            del hints[name]
+        with open(hint_file, 'w') as f:
+            f.write(json.dumps(hints))
+
+def get_hint(path, name, message, guess=None, find_common=False):
+    hint_file = os.path.join(os.path.dirname(path), _HINT_FILE)
     hints = {}
     if os.path.isfile(hint_file):
         with open(hint_file, 'r') as f:
             hints = json.load(f)
     if name not in hints:
-        hints[name] = _get_new_hint(name, message, guess)
+        hints[name] = _get_new_hint(name, message, guess, find_common)
         with open(hint_file, 'w') as f:
             f.write(json.dumps(hints))
     return hints[name]
 
-def _get_new_hint(name, message, guess):
+def _get_new_hint(name, message, guess=None, find_common=False):
+    MANUALLY_ENTER = '<Manually enter>'
     if guess:
+        guess = list(guess)
+        if find_common:
+            common_str = os.path.commonprefix(guess).strip()
+            if common_str:
+                guess.append(common_str)
         questions = [
             inquirer.List(
                 name,
                 message=message,
-                choices=guess,
+                choices=guess + [MANUALLY_ENTER],
             ),
         ]
     else:
@@ -46,7 +85,17 @@ def _get_new_hint(name, message, guess):
     hints = inquirer.prompt(questions)
     if hints is None:
         exit(1)
+    if hints[name] == MANUALLY_ENTER:
+        return _get_new_hint(name, 'Please enter:')
     return hints[name]
+
+def confirm(message):
+    print(message)
+    questions = [
+        inquirer.Confirm('confirmed', message='Does it looks good?'),
+    ]
+    answers = inquirer.prompt(questions)
+    return answers['confirmed']
 
 def detect_encoding(fpath):
     with open(fpath, 'rb') as f:
@@ -62,7 +111,16 @@ def detect_encoding(fpath):
             chardet_confidence = int(charset['confidence'] * 100)
             chardet_language = charset['language']
             if icu_confidence < 45 and chardet_confidence < 45:
-                return get_hint(fpath, 'encoding', f'Need hint for charset: {fpath}'), -1
+                new_hint = not has_hint(fpath, 'encoding')
+                while True:
+                    guided_encoding = get_hint(fpath, 'encoding', f'Need hint for charset: {fpath}', ['shift_jis'])
+                    if not new_hint:
+                        break
+                    elif confirm(smart_read(fpath, guided_encoding)):
+                        break
+                    else:
+                        erase_hint(fpath, 'encoding')
+                return guided_encoding, -1
             elif icu_confidence > chardet_confidence:
                 return icu_encoding, icu_confidence
             else:
