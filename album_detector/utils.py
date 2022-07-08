@@ -66,7 +66,7 @@ def _get_new_hint(name, message, guess=None, find_common=False):
         guess = list(guess)
         if find_common:
             common_str = os.path.commonprefix(guess).strip()
-            if common_str:
+            if common_str and common_str not in guess:
                 guess.append(common_str)
         questions = [
             inquirer.List(
@@ -163,6 +163,10 @@ def do_scan(album_set, album_cb, include_failed=False, limit=None):
         n_processing += 1
         print(f'Processing {n_processing}/{n_total}...')
         path = os.path.join(album_set, d)
+        finfo = file_info.FileInfo(path)
+        if finfo.is_file or finfo.is_empty_dir:
+            print(f'Ignoring {path}')
+            continue
         try:
             retval[path] = album_cb(path)
         except KeyboardInterrupt:

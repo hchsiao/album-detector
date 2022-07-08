@@ -3,6 +3,7 @@ import os
 import json
 
 from album_detector import utils
+from album_detector import file_info
 
 def album_cb(path):
     cmds = utils.handle_path(path, '/tmp', False)
@@ -25,7 +26,7 @@ def main():
             path_list = json.loads(f.read())
             for path in path_list:
                 print(f'Challenging {path}')
-                retval = album_cb(path)
+                album_cb(path)
     elif args.dump_fail:
         dump = utils.do_scan(path, album_cb, include_failed=True)
         failed = [p for p in dump if not dump[p]]

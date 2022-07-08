@@ -160,6 +160,12 @@ class FileInfo:
         return False
 
     @cached_property
+    def is_empty_dir(self):
+        if not os.path.isdir(self.fpath):
+            return False
+        return not list(os.listdir(self.fpath))
+
+    @cached_property
     def is_file(self):
         return os.path.isfile(self.fpath)
 

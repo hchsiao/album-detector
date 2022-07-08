@@ -107,18 +107,17 @@ class AlbumInfo:
                 cue, ca = cues[i], cue_audios[i]
                 if os.path.isfile(ca):
                     self.discs.append(DiscInfo(album=self, cue=cue))
-        else:
+        else: # Splitted audio
             assert not cues
-            track_no_list = []
+            track_list_by_album = {}
             for a in self.audio:
-                track_no_list.append(a.track_no)
-            if len(set(track_no_list)) == len(track_no_list):
-                # Splitted audio && Single disc
-                self.discs = [DiscInfo(album=self, audio=self.audio)]
-            else:
-                # Splitted audio && Multiple disc
-                # TODO: example PK6/wac...
-                raise NotImplementedError()
+                track_list = track_list_by_album.setdefault(a.audio_info['album'], [])
+                track_list.append(a)
+            self.discs = []
+            for albums, track_list in track_list_by_album.items():
+                track_num_list = [a.track_no for a in track_list]
+                assert len(set(track_num_list)) == len(track_num_list)
+                self.discs.append(DiscInfo(album=self, audio=track_list))
 
         disc_albums = [knowledge.norm_album_name(disc.info['album']) for disc in self.discs]
         disc_artists = [disc.info['artist'] for disc in self.discs]
