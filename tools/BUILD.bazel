@@ -1,0 +1,7 @@
+py_binary(
+  name = "index_browser",
+  srcs = ["index_browser.py"],
+  main = "index_browser.py",
+  data = ["//album_detector:mkindex"],
+  args = ["$(location //album_detector:mkindex)"],
+)

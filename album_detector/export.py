@@ -40,7 +40,7 @@ def export_m3u(album):
             filelist.append(a.fpath)
         playlist = '\n'.join(filelist).replace('[', '%5b').replace(']', '%5d')
         playlists.append(playlist)
-    return playlists
+    return ['\n'.join(playlists)]
 
 def export_cue(album):
     return [_disc_cue(disc) for disc in album.discs]

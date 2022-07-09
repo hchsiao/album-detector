@@ -150,6 +150,15 @@ def mkfilelist(path: str, max_files: int = 200):
     finfos = [file_info.FileInfo(fp) for fp in files]
     return finfos
 
+def handle_index(path):
+    path = os.path.normpath(path)
+    finfos = mkfilelist(path)
+    album = album_info.AlbumInfo(finfos)
+    return {
+            'artist': album.artist,
+            'album': album.name,
+            }
+
 def handle_path(path, output_dir, audio_only):
     path = os.path.normpath(path)
     finfos = mkfilelist(path)

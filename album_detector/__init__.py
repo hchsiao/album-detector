@@ -16,12 +16,18 @@ def main():
     parser.add_argument('--audio-only', action='store_true')
     parser.add_argument('--doit', action='store_true')
     parser.add_argument('--playlist', action='store_true')
+    parser.add_argument('--mkindex', action='store_true')
     parser.add_argument('--dump-fail', action='store_true')
     parser.add_argument('--check-fail', action='store_true')
     args = parser.parse_args()
     path = os.path.normpath(args.path)
 
-    if args.check_fail:
+    if args.mkindex:
+        input_dir = os.path.normpath('/tmp')
+        indexes = utils.do_scan(input_dir, utils.handle_index)
+        with open(path, 'w') as f:
+            f.write(json.dumps(indexes))
+    elif args.check_fail:
         with open(args.path, 'r') as f:
             path_list = json.loads(f.read())
             for path in path_list:
