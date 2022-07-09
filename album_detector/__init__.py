@@ -35,14 +35,19 @@ def main():
             f.write(json.dumps(failed))
     else:
         if args.playlist:
-            playlist, filetype = utils.handle_path_playlist(path)
-            filename = f'tmp.{filetype}'
+            playlists, filetype = utils.handle_path_playlist(path)
+            playlist_files = []
+            for index, playlist in enumerate(playlists):
+                filename = f'playlist_{index}.{filetype}'
+                if args.doit:
+                    playlist_files.append(filename)
+                    with open(filename, 'w') as f:
+                        f.write(playlist)
+                else:
+                    print(playlist)
             if args.doit:
-                with open(filename, 'w') as f:
-                    f.write(playlist)
-                utils.shell(f'open {filename}')
-            else:
-                print(playlist)
+                playlist_files = ' '.join(playlist_files)
+                utils.shell(f'open {playlist_files}')
         else:
             cmds = utils.handle_path(path, args.output_dir, args.audio_only)
             for cmd in cmds:

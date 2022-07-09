@@ -31,11 +31,19 @@ def export_cmds(album, output_dir, audio_only=False):
 
     return retval
 
-def export_cue(album):
-    retval = ""
+def export_m3u(album):
+    playlists = []
     for disc in album.discs:
-        retval += _disc_cue(disc)
-    return retval
+        filelist = []
+        assert disc.audio_splitted
+        for a in disc.album.audio:
+            filelist.append(a.fpath)
+        playlist = '\n'.join(filelist).replace('[', '%5b').replace(']', '%5d')
+        playlists.append(playlist)
+    return playlists
+
+def export_cue(album):
+    return [_disc_cue(disc) for disc in album.discs]
 
 def _output_filename(disc, track_no, ext):
     return 'disc%d-%.2d.%s' % (disc.disc_no, track_no, ext)

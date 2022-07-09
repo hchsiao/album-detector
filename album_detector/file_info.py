@@ -31,6 +31,8 @@ def parse_cue(cue_str):
             pass
         elif line.startswith('REM COMPOSER '):
             pass
+        elif line.startswith('SONGWRITER '):
+            pass
         elif line.startswith('CATALOG '):
             pass
         elif line.startswith('PERFORMER '):
@@ -55,6 +57,8 @@ def parse_cue(cue_str):
             pass
         elif line.startswith('    REM COMPOSER '):
             pass
+        elif line.startswith('    FLAGS PRE'):
+            pass
         elif line.startswith('    FLAGS DCP'):
             pass # digital copy permitted
         elif line.startswith('    TITLE '):
@@ -70,6 +74,10 @@ def parse_cue(cue_str):
         elif line.startswith('    INDEX 01 '):
             t = [int(n) for n in ' '.join(line.strip().split(' ')[2:]).replace('"', '').split(':')]
             tracks[-1]['start'] = 100 * (60 * t[0] + t[1]) + t[2]
+        elif line.startswith('    INDEX 02 '):
+            pass
+        elif line.startswith('    INDEX 03 '):
+            pass
         else:
             assert False, f'Unknown cue line: {line} (bytes: {line.encode()})'
     
@@ -191,6 +199,8 @@ class FileInfo:
 
     @cached_property
     def is_log(self):
+        if 'accurip' == self.fext and 'text' in self.type_str:
+            return True
         if 'sfv' == self.fext and 'text' in self.type_str:
             return True
         if 'nfo' == self.fext and 'text' in self.type_str:
@@ -320,7 +330,7 @@ class FileInfo:
                             p = os.path.join(self.dirname, f)
                             enc, confid = utils.detect_encoding(p)
                             hit = False
-                            _cue = utils.smart_read(p, enc)
+                            _cue = utils.smart_read(p, enc, robust=True)
                             _info, _trk = parse_cue(_cue)
                             hit = os.path.isfile(os.path.join(self.dirname, _info['file']))
                             if hit:

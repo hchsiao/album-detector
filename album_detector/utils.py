@@ -136,7 +136,9 @@ def shell(cmd):
     with subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE) as p:
         p.wait()
         ercd = p.returncode
-        retval = p.stdout.read().decode().strip()
+        stdout = p.stdout.read()
+        # Sometimes `file` command emits wierd bytes
+        retval = stdout.decode(errors='ignore').strip()
         if ercd != 0:
             print(retval, file=sys.stderr)
             raise RuntimeError(f'Exit code of {cmd} is {ercd}')
@@ -159,8 +161,13 @@ def handle_path_playlist(path):
     path = os.path.normpath(path)
     finfos = mkfilelist(path)
     album = album_info.AlbumInfo(finfos)
-    assert album.n_disc == 1
-    return export.export_cue(album), 'cue'
+    is_splitted = [disc.audio_splitted for disc in album.discs]
+    assert len(set(is_splitted)) == 1
+    is_splitted = is_splitted[0]
+    if is_splitted:
+        return export.export_m3u(album), 'm3u'
+    else:
+        return export.export_cue(album), 'cue'
 
 def do_scan(album_set, album_cb, include_failed=False, limit=None):
     retval = {}

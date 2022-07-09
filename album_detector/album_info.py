@@ -120,14 +120,19 @@ class AlbumInfo:
                     self.discs.append(DiscInfo(album=self, cue=cue))
         else: # Splitted audio
             assert not cues
-            track_list_by_album = {}
-            for a in self.audio:
-                track_list = track_list_by_album.setdefault(a.audio_info['album'], [])
-                track_list.append(a)
             self.discs = []
-            for albums, track_list in track_list_by_album.items():
-                track_num_list = [a.track_no for a in track_list]
-                assert len(set(track_num_list)) == len(track_num_list)
+            attr_cb_list = [lambda a: a.audio_info['album'], lambda a: a.dirname]
+            for attr_cb in attr_cb_list:
+                attr_is_good = True
+                track_list_by_disc = self.cluster_splitted_audio(attr_cb)
+                for track_list in track_list_by_disc:
+                    track_num_list = [a.track_no for a in track_list]
+                    if len(set(track_num_list)) != len(track_num_list):
+                        attr_is_good = False
+                if attr_is_good:
+                    break
+            assert attr_is_good, 'Failed to divide audios into discs'
+            for track_list in track_list_by_disc:
                 self.discs.append(DiscInfo(album=self, audio=track_list))
 
         disc_albums = [knowledge.norm_album_name(disc.info['album']) for disc in self.discs]
@@ -141,4 +146,15 @@ class AlbumInfo:
         assert disc_artists.count(most_freq_artist) >= 1
         self.name = disc_albums[0]
         self.artist = most_freq_artist
+
+    def cluster_splitted_audio(self, get_attr_cb):
+        track_list_by_attr = {}
+        for a in self.audio:
+            track_list = track_list_by_attr.setdefault(get_attr_cb(a), [])
+            track_list.append(a)
+        discs = []
+        for album, track_list in track_list_by_attr.items():
+            track_num_list = [a.track_no for a in track_list]
+            discs.append(track_list)
+        return discs
 
