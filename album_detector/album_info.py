@@ -126,6 +126,7 @@ class AlbumInfo:
                 attr_is_good = True
                 track_list_by_disc = self.cluster_splitted_audio(attr_cb)
                 for track_list in track_list_by_disc:
+                    assert 'track' in track_list[0].audio_info, 'Not implemented: try to recover this piece of info'
                     track_num_list = [a.track_no for a in track_list]
                     if len(set(track_num_list)) != len(track_num_list):
                         attr_is_good = False

@@ -15,6 +15,14 @@ def parse_cue(cue_str):
     for line in d:
         if not line:
             continue
+        elif line.startswith('REM DISCNUMBER '):
+            pass
+        elif line.startswith('REM TOTALDISCS '):
+            pass
+        elif line.startswith('REM ACCURATERIPID '):
+            pass
+        elif line.startswith('REM CATALOG '):
+            pass
         elif line.startswith('REM GENRE '):
             general['genre'] = ' '.join(line.split(' ')[2:])
         elif line.startswith('REM DATE '):
@@ -45,6 +53,8 @@ def parse_cue(cue_str):
             track = general.copy()
             track['track'] = int(line.strip().split(' ')[1], 10)
             tracks.append(track)
+        elif line.startswith('    SONGWRITER '):
+            pass
         elif line.startswith('    ISRC '):
             pass
         elif line.startswith('    REM GENRE '):
@@ -159,6 +169,10 @@ class FileInfo:
 
     @cached_property
     def is_video(self):
+        if 'mpg' == self.fext and 'MPEG' in self.type_str:
+            return True
+        if 'mov' == self.fext and 'QuickTime' in self.type_str:
+            return True
         if 'mds' == self.fext: # disc image
             return True
         if 'iso' == self.fext: # TODO: not necessarily a video
@@ -215,6 +229,16 @@ class FileInfo:
 
     @cached_property
     def is_garbage(self):
+        if self.fext.startswith('doc') and 'Microsoft Word' in self.type_str:
+            return True
+        if 'pdf' == self.fext and 'PDF' in self.type_str:
+            return True
+        if 'QuickTimeInstall' in self.basename:
+            return True
+        if 'inf' == self.fext and 'Autorun' in self.type_str:
+            return True
+        if 'ico' == self.fext and 'icon' in self.type_str:
+            return True
         if 'HTML document' in self.type_str:
             return True
         if 'lrc' == self.fext and 'text' in self.type_str:
@@ -256,11 +280,17 @@ class FileInfo:
 
     @cached_property
     def is_lossy_audio(self):
+        if 'ogg' == self.fext and 'Vorbis audio' in self.type_str:
+            return True
+        if 'm4a' == self.fext and 'MP4' in self.type_str:
+            return True
         if 'm4a' == self.fext and 'Apple iTunes' in self.type_str:
             return True # TODO: this can also be ALAC, which is lossless
         if 'mp3' == self.fext and 'MPEG ADTS, layer III' in self.type_str:
             return True
         if 'mp3' == self.fext and 'Audio file with ID3' in self.type_str:
+            return True
+        if 'wma' == self.fext and 'Microsoft' in self.type_str:
             return True
         return False
 
