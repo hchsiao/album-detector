@@ -1,4 +1,5 @@
 import os
+import sys
 import subprocess
 import signal
 import json
@@ -14,6 +15,8 @@ from album_detector import file_info
 from album_detector import album_info
 from album_detector import knowledge
 from album_detector import export
+
+no_interact = False
 
 def smart_read(filename, encoding='utf-8', robust=False):
     try:
@@ -61,6 +64,7 @@ def get_hint(path, name, message, guess=None, find_common=False):
     return hints[name]
 
 def _get_new_hint(name, message, guess=None, find_common=False):
+    assert not no_interact
     MANUALLY_ENTER = '<Manually enter>'
     if guess:
         guess = list(guess)
@@ -128,11 +132,14 @@ def detect_encoding(fpath):
     raise RuntimeError()
 
 def shell(cmd):
+    cmd = cmd.replace('`', '\`')
     with subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE) as p:
         p.wait()
         ercd = p.returncode
-        assert ercd == 0, f'Exit code of {cmd} is {ercd}'
         retval = p.stdout.read().decode().strip()
+        if ercd != 0:
+            print(retval, file=sys.stderr)
+            raise RuntimeError(f'Exit code of {cmd} is {ercd}')
     return retval
 
 def mkfilelist(path: str, max_files: int = 200):
@@ -148,11 +155,12 @@ def handle_path(path, output_dir, audio_only):
     cmds = export.export_cmds(album, output_dir, audio_only=audio_only)
     return cmds
 
-def handle_path_cue(path):
+def handle_path_playlist(path):
     path = os.path.normpath(path)
     finfos = mkfilelist(path)
     album = album_info.AlbumInfo(finfos)
-    return export.export_cue(album)
+    assert album.n_disc == 1
+    return export.export_cue(album), 'cue'
 
 def do_scan(album_set, album_cb, include_failed=False, limit=None):
     retval = {}

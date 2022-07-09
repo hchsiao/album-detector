@@ -30,6 +30,11 @@ class DiscInfo:
             self.info, self.tracks = cue_info
             if 'artist' not in self.info:
                 self.info['artist'] = self.tracks[0]['artist']
+            if 'album' not in self.info:
+                self.info['album'] = utils.get_hint(audio.fpath, 'album_name', 'Fill missing album name')
+                for track in self.tracks:
+                    assert 'album' not in track
+                    track['album'] = self.info['album']
 
             if self.cue_embedded:
                 self.info['file'] = audio.fpath
@@ -70,8 +75,14 @@ class AlbumInfo:
         self.mv = files['mv']
         self.booklets = files['booklets']
         if files['audio(lossless)']:
-            assert not files['audio(lossy)'], 'should not contain both lossless and lossy audios'
             self.audio = files['audio(lossless)']
+            if files['audio(lossy)']:
+                allow_lossless_lossy_mix = utils.get_hint(
+                        self.audio[0].fpath,
+                        'allow_lossless_lossy_mix',
+                        'Containing both lossless and lossy audios. Confirm?',
+                        )
+                assert allow_lossless_lossy_mix.lower() == 'yes'
         else:
             assert files['audio(lossy)'], 'no audio file at all?'
             self.audio = files['audio(lossy)']

@@ -23,6 +23,12 @@ def parse_cue(cue_str):
             pass
         elif line.startswith('REM COMMENT '):
             pass
+        elif line.startswith('REM REPLAYGAIN_TRACK_GAIN '):
+            pass
+        elif line.startswith('REM REPLAYGAIN_ALBUM_GAIN '):
+            pass
+        elif line.startswith('REM REPLAYGAIN_ALBUM_PEAK '):
+            pass
         elif line.startswith('REM COMPOSER '):
             pass
         elif line.startswith('CATALOG '):
@@ -39,6 +45,14 @@ def parse_cue(cue_str):
             tracks.append(track)
         elif line.startswith('    ISRC '):
             pass
+        elif line.startswith('    REM GENRE '):
+            pass
+        elif line.startswith('    REM DATE '):
+            pass
+        elif line.startswith('    REM REPLAYGAIN_TRACK_PEAK '):
+            pass
+        elif line.startswith('    REM REPLAYGAIN_TRACK_GAIN '):
+            pass
         elif line.startswith('    REM COMPOSER '):
             pass
         elif line.startswith('    FLAGS DCP'):
@@ -47,8 +61,10 @@ def parse_cue(cue_str):
             tracks[-1]['title'] = ' '.join(line.strip().split(' ')[1:]).replace('"', '')
         elif line.startswith('    PERFORMER '):
             tracks[-1]['artist'] = ' '.join(line.strip().split(' ')[1:]).replace('"', '')
-        elif line.startswith('    INDEX 00 '):
+        elif line.startswith('    PREGAP '):
             # TODO: https://wiki.hydrogenaud.io/index.php?title=EAC_Gap_Settings
+            pass
+        elif line.startswith('    INDEX 00 '):
             # TODO: https://wiki.hydrogenaud.io/index.php?title=EAC_and_Cue_Sheets
             pass
         elif line.startswith('    INDEX 01 '):
@@ -175,6 +191,10 @@ class FileInfo:
 
     @cached_property
     def is_log(self):
+        if 'sfv' == self.fext and 'text' in self.type_str:
+            return True
+        if 'nfo' == self.fext and 'text' in self.type_str:
+            return True
         if 'txt' == self.fext:
             return True
         if 'log' == self.fext:
@@ -185,7 +205,11 @@ class FileInfo:
 
     @cached_property
     def is_garbage(self):
+        if 'HTML document' in self.type_str:
+            return True
         if 'lrc' == self.fext and 'text' in self.type_str:
+            return True
+        if 'srr' == self.fext and 'data' == self.type_str:
             return True
         if 'fpl' == self.fext and 'data' == self.type_str:
             return True

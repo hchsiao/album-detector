@@ -51,37 +51,30 @@ def _disc_cmds(disc, output_dir):
         return retval
 
 def _disc_cue(disc):
-    if not disc.audio_splitted:
-        header_template = """PERFORMER "{artist}"
+    assert not disc.audio_splitted
+    header_template = """PERFORMER "{artist}"
 TITLE "{album}"
 FILE "{filename}" WAVE"""
-        track_template = """
+    track_template = """
   TRACK {track} AUDIO
     TITLE "{title}"
     PERFORMER "{artist}"
     INDEX 01 {time}"""
         
-        retval = header_template.format(**{
-                "artist": disc.album.artist,
-                "album": disc.tracks[0]['album'],
-                "filename": disc.info['file'],
+    retval = header_template.format(**{
+            "artist": disc.album.artist,
+            "album": disc.tracks[0]['album'],
+            "filename": disc.info['file'],
+        })
+    for track in disc.tracks:
+        time = '%.2d:%.2d:%.2d' % (track['start'] / 60 / 100, track['start'] / 100 % 60, track['start'] % 100)
+        retval += track_template.format(**{
+            "track": track['track'],
+            "title": track['title'],
+            "artist": track['artist'],
+            "time": time,
             })
-        for track in disc.tracks:
-            time = '%.2d:%.2d:%.2d' % (track['start'] / 60 / 100, track['start'] / 100 % 60, track['start'] % 100)
-            retval += track_template.format(**{
-                "track": track['track'],
-                "title": track['title'],
-                "artist": track['artist'],
-                "time": time,
-                })
-        return retval
-    else:
-        raise NotImplementedError()
-        retval = []
-        for a in disc.album.audio:
-            out_fname = _output_filename(disc, a.track_no, a.fext)
-            retval.append(f'cp "{a.fpath}" "{output_dir}/{out_fname}"')
-        return retval
+    return retval
 
 def _ffmpeg_cmds(disc, output_dir):
     retval = []

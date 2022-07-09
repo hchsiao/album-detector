@@ -15,7 +15,7 @@ def main():
     parser.add_argument('--output-dir', default='.') # TODO: check if still working with bazel?
     parser.add_argument('--audio-only', action='store_true')
     parser.add_argument('--doit', action='store_true')
-    parser.add_argument('--cue', action='store_true')
+    parser.add_argument('--playlist', action='store_true')
     parser.add_argument('--dump-fail', action='store_true')
     parser.add_argument('--check-fail', action='store_true')
     args = parser.parse_args()
@@ -28,19 +28,21 @@ def main():
                 print(f'Challenging {path}')
                 album_cb(path)
     elif args.dump_fail:
+        utils.no_interact = True
         dump = utils.do_scan(path, album_cb, include_failed=True)
         failed = [p for p in dump if not dump[p]]
         with open('failed.json', 'w') as f:
             f.write(json.dumps(failed))
     else:
-        if args.cue:
-            cue = utils.handle_path_cue(path)
-            with open('tmp.cue', 'w') as f:
-                f.write(cue)
+        if args.playlist:
+            playlist, filetype = utils.handle_path_playlist(path)
+            filename = f'tmp.{filetype}'
             if args.doit:
-                utils.shell('open tmp.cue')
+                with open(filename, 'w') as f:
+                    f.write(playlist)
+                utils.shell(f'open {filename}')
             else:
-                print(cue)
+                print(playlist)
         else:
             cmds = utils.handle_path(path, args.output_dir, args.audio_only)
             for cmd in cmds:

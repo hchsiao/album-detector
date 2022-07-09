@@ -9,7 +9,7 @@ def check_fileinfos(fileinfos):
         for uf in unknown:
             print(f'Filename: {uf.basename}')
             print(f'Magic string: {uf.type_str}')
-        assert not unknown
+        assert not unknown, 'found unknown file'
 
 
 def norm_album_name(name):
