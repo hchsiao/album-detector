@@ -23,7 +23,9 @@ class DiscInfo:
                 self.info['artist'] = knowledge.various_artist_name()
         else:
             self.audio_splitted = False
-            assert cue or audio.embedded_cue # TODO: shouldn't enforce
+            supported_case = cue or audio.embedded_cue
+            if not supported_case:
+                raise NotImplementedError()
             self.cue_embedded = cue is None
 
             cue_info = audio.cue_info if audio and audio.embedded_cue else cue.cue_info

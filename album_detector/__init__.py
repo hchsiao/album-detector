@@ -10,9 +10,9 @@ def album_cb(path):
     return bool(cmds)
 
 def main():
-    parser = argparse.ArgumentParser(description='TODO')
+    parser = argparse.ArgumentParser(description='Normalize album format from different sources for creating music library')
     parser.add_argument('path') 
-    parser.add_argument('--output-dir', default='.') # TODO: check if still working with bazel?
+    parser.add_argument('--output-dir', default='.')
     parser.add_argument('--audio-only', action='store_true')
     parser.add_argument('--doit', action='store_true')
     parser.add_argument('--playlist', action='store_true')
