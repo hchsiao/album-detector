@@ -39,9 +39,19 @@ class DiscInfo:
                     track['album'] = self.info['album']
 
             if self.cue_embedded:
-                self.info['file'] = audio.fpath
+                if utils.has_hint(audio.fpath, 'audio_file'):
+                    replaced_audio_map = utils.get_hint(audio.fpath, 'audio_file')
+                    replaced_audio = replaced_audio_map[audio.basename]
+                    self.info['file'] = os.path.join(audio.dirname, replaced_audio)
+                else:
+                    self.info['file'] = audio.fpath
             else:
-                self.info['file'] = os.path.join(cue.dirname, self.info['file'])
+                if utils.has_hint(cue.fpath, 'audio_file'):
+                    replaced_audio_map = utils.get_hint(cue.fpath, 'audio_file')
+                    replaced_audio = replaced_audio_map[self.info['file']]
+                    self.info['file'] = os.path.join(cue.dirname, replaced_audio)
+                else:
+                    self.info['file'] = os.path.join(cue.dirname, self.info['file'])
 
         album.n_disc += 1
         self.disc_no = album.n_disc
@@ -85,6 +95,10 @@ class AlbumInfo:
                         'Containing both lossless and lossy audios. Confirm?',
                         )
                 assert allow_lossless_lossy_mix.lower() == 'yes'
+            if utils.has_hint(self.audio[0].fpath, 'audio_file'):
+                replaced_audio_map = utils.get_hint(self.audio[0].fpath, 'audio_file')
+                replaced_audios = list(replaced_audio_map.values())
+                self.audio = [a for a in self.audio if a.basename not in replaced_audios]
         else:
             assert files['audio(lossy)'], 'no audio file at all?'
             self.audio = files['audio(lossy)']

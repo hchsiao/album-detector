@@ -51,13 +51,15 @@ def erase_hint(path, name):
         with open(hint_file, 'w') as f:
             f.write(json.dumps(hints))
 
-def get_hint(path, name, message, guess=None, find_common=False):
+def get_hint(path, name, message=None, guess=None, find_common=False):
     hint_file = os.path.join(os.path.dirname(path), _HINT_FILE)
     hints = {}
     if os.path.isfile(hint_file):
         with open(hint_file, 'r') as f:
             hints = json.load(f)
     if name not in hints:
+        if not message:
+            raise RuntimeError("Prompt message not specified")
         hints[name] = _get_new_hint(name, message, guess, find_common)
         with open(hint_file, 'w') as f:
             f.write(json.dumps(hints))
