@@ -59,6 +59,7 @@ class DiscInfo:
         # slashs are not supported in filesystems
         self.info['album'] = self.info['album'].replace('/', '／')
         self.info['artist'] = self.info['artist'].replace('/', '／')
+        assert self.info['artist'], 'Artist name shall not be empty'
 
     @cached_property
     def _disc_no(self):
