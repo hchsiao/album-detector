@@ -52,6 +52,7 @@ class DiscInfo:
                     self.info['file'] = os.path.join(cue.dirname, replaced_audio)
                 else:
                     self.info['file'] = os.path.join(cue.dirname, self.info['file'])
+                    assert os.path.isfile(self.info['file'])
 
         album.n_disc += 1
         self.disc_no = album.n_disc
