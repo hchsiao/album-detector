@@ -104,6 +104,7 @@ def _ffmpeg_cmds(disc, output_dir):
         cmd = 'ffmpeg'
         cmd += ' -i "%s"' % disc.info['file']
         cmd += ' -ss %.2d:%.2d:%07.4f' % (track['start'] / 60 / 60 / 75, track['start'] / 60 / 75 % 60, track['start'] / 75 % 60)
+        cmd += ' -compression_level 12'
     
         if 'duration' in track:
             cmd += ' -t %.2d:%.2d:%07.4f' % (track['duration'] / 60 / 60 / 75, track['duration'] / 60 / 75 % 60, track['duration'] / 75 % 60)
